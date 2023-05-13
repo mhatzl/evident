@@ -9,9 +9,9 @@ evident::create_static_publisher!(
     MinId,
     MinEventEntry,
     MinInterimEvent,
-    CAPTURE_CHANNEL_BOUND = 1,
-    SUBSCRIPTION_CHANNEL_BOUND = 1,
-    non_blocking = false
+    CAPTURE_CHANNEL_BOUND = 500,
+    SUBSCRIPTION_CHANNEL_BOUND = 500,
+    non_blocking = true
 );
 
 evident::create_set_event_macro!(

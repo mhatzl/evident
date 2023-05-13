@@ -44,8 +44,8 @@ where
 
         thread::spawn(move || loop {
             match recv.recv() {
-                Ok(event_msg) => {
-                    on_event(event_msg);
+                Ok(event) => {
+                    on_event(event);
                 }
                 Err(_) => {
                     // Sender got dropped => Publisher got dropped
