@@ -10,16 +10,14 @@ use std::{
 
 use crate::event::{entry::EventEntry, intermediary::IntermediaryEvent, Event};
 
-pub trait Id: Default + Clone + Hash + PartialEq + Eq {}
+pub trait Id: Default + Clone + Hash + PartialEq + Eq + Send + Sync + 'static {}
 
 pub(crate) type Subscriber<K, T> = HashMap<uuid::Uuid, SubscriptionSender<K, T>>;
 
-#[derive(Default, Clone)]
 pub struct Subscription<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
 {
     pub(crate) channel_id: uuid::Uuid,
     pub(crate) receiver: Receiver<Event<K, T>>,
@@ -30,7 +28,6 @@ impl<K, T> PartialEq for Subscription<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
@@ -41,7 +38,6 @@ impl<K, T> Eq for Subscription<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
 {
 }
 
@@ -49,7 +45,6 @@ impl<K, T> Subscription<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
 {
     pub fn get_receiver(&self) -> &Receiver<Event<K, T>> {
         &self.receiver
@@ -60,19 +55,18 @@ impl<K, T> Hash for Subscription<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub(crate) struct SubscriptionSender<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
     pub(crate) channel_id: uuid::Uuid,
     pub(crate) sender: SyncSender<Event<K, T>>,
@@ -82,7 +76,7 @@ impl<K, T> PartialEq for SubscriptionSender<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
@@ -93,7 +87,7 @@ impl<K, T> Eq for SubscriptionSender<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
 }
 
@@ -101,7 +95,7 @@ impl<K, T> Hash for SubscriptionSender<K, T>
 where
     K: Id,
     T: EventEntry<K>,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);
@@ -109,16 +103,14 @@ where
 }
 
 pub struct EvidentPublisher<
-    K: Id,
-    T: EventEntry<K>,
+    K,
+    T,
     const CAPTURE_CHANNEL_BOUND: usize,
     const SUBSCRIPTION_CHANNEL_BOUND: usize,
 > where
     K: Id,
     T: EventEntry<K>,
-    Event<K, T>: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
@@ -130,11 +122,9 @@ impl<K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND:
 where
     K: Id,
     T: EventEntry<K>,
-    Event<K, T>: EventEntry<K>,
-    Receiver<Event<K, T>>: Default + Clone,
-    SyncSender<Event<K, T>>: Default + Clone,
+    SyncSender<Event<K, T>>: Clone,
 {
-    pub fn new(on_event: fn(event: Event<K, T>)) -> Self {
+    pub fn new(on_event: impl Fn(Event<K, T>) + std::marker::Send + 'static) -> Self {
         let (send, recv) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
 
         thread::spawn(move || loop {
@@ -156,23 +146,23 @@ where
         }
     }
 
-    pub fn capture(&self, interm_event: &mut IntermediaryEvent<K, T>) {
+    pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
         let _ = self
             .capturer
-            .send(Event::new(std::mem::take(&mut interm_event.entry)));
+            .send(Event::new(interm_event.take_entry()));
     }
 
-    pub fn try_capture(&self, interm_event: &mut IntermediaryEvent<K, T>) {
+    pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
         let _ = self
             .capturer
-            .try_send(Event::new(std::mem::take(&mut interm_event.entry)));
+            .try_send(Event::new(interm_event.take_entry()));
     }
 
-    pub fn subscribe(&self, id: K) -> Option<Subscription<K, T>> {
+    pub fn subscribe(&self, id: &K) -> Option<Subscription<K, T>> {
         self.subscribe_to_many(&vec![id])
     }
 
-    pub fn subscribe_to_many(&self, ids: &Vec<K>) -> Option<Subscription<K, T>> {
+    pub fn subscribe_to_many(&self, ids: &Vec<&K>) -> Option<Subscription<K, T>> {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
@@ -182,7 +172,7 @@ where
         match self.subscriptions.write().ok() {
             Some(mut locked_subs) => {
                 for id in ids {
-                    let entry = locked_subs.entry(id.clone());
+                    let entry = locked_subs.entry((*id).clone());
                     entry
                         .and_modify(|v| {
                             v.insert(subscription_sender.channel_id, subscription_sender.clone());
@@ -253,7 +243,7 @@ where
         // Remove dead channels
         if !bad_subs.is_empty() {
             if let Ok(mut locked_subscriptions) = self.subscriptions.write() {
-                let mut entry = locked_subscriptions.entry(key);
+                let mut entry = locked_subscriptions.entry(key.clone());
                 for i in bad_subs {
                     entry = entry.and_modify(|v| {
                         v.remove(&i);
@@ -274,9 +264,9 @@ where
 
 #[macro_export]
 macro_rules! create_on_event {
-    ($publisher:ident, $entry_type:ty) => {
-        fn on_event(event: $crate::event::Event<$entry_type>) {
-            publisher.on_event(event);
+    ($publisher:ident, $id_type:ty, $entry_type:ty) => {
+        fn on_event(event: $crate::event::Event<$id_type, $entry_type>) {
+            $publisher.on_event(event);
         }
     };
 }

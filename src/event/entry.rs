@@ -12,7 +12,7 @@ pub trait EventEntry<K: Id>: Default + Clone + Send + Sync + 'static {
         module_path: &str,
     ) -> Self;
 
-    fn get_event_id(&self) -> K;
+    fn get_event_id(&self) -> &K;
 
     fn get_entry_id(&self) -> uuid::Uuid;
 

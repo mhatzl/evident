@@ -10,7 +10,7 @@ pub mod macros;
 pub mod origin;
 
 /// Trait to use [`LogId`] for tracing.
-pub trait EventFns<K: Id, T: EventEntry<K>> {
+pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
     /// Set an event for a [`LogId`], and storing it inside the [`LogIdMap`] of the given crate name.
     ///
     /// # Arguments
@@ -27,10 +27,10 @@ pub trait EventFns<K: Id, T: EventEntry<K>> {
         filename: &str,
         line_nr: u32,
         module_path: &str,
-    ) -> IntermediaryEvent<K, T>;
+    ) -> I;
 }
 
-impl<K: Id, T: EventEntry<K>> EventFns<K, T> for K {
+impl<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> EventFns<K, T, I> for K {
     fn set_event(
         self,
         crate_name: &str,
@@ -38,8 +38,8 @@ impl<K: Id, T: EventEntry<K>> EventFns<K, T> for K {
         filename: &str,
         line_nr: u32,
         module_path: &str,
-    ) -> IntermediaryEvent<K, T> {
-        IntermediaryEvent::<K, T>::new(self, crate_name, msg, filename, line_nr, module_path)
+    ) -> I {
+        I::new(self, crate_name, msg, filename, line_nr, module_path)
     }
 }
 
@@ -62,7 +62,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     }
 
     /// Returns the [`LogId`] of this log-id event
-    pub fn get_id(&self) -> K {
+    pub fn get_id(&self) -> &K {
         self.entry.get_event_id()
     }
 
