@@ -8,14 +8,15 @@ pub mod entry;
 pub mod intermediary;
 pub mod origin;
 
-/// Trait to use [`LogId`] for tracing.
+/// Trait to create an [`IntermediaryEvent<K, T>`] that is captured by a publisher once the event is either
+/// explicitly `finalized`, or implicitly dropped.
 pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
-    /// Set an event for a [`LogId`], and storing it inside the [`LogIdMap`] of the given crate name.
+    /// Set an event for an [`Id`].
     ///
     /// # Arguments
     ///
-    /// * `crate_name` ... Name of the crate to identify the [`LogIdMap`]
-    /// * `msg` ... Main message that is set for this log-id (should be a user-centered event description)
+    /// * `crate_name` ... Name of the crate the event should be associated with
+    /// * `msg` ... Main message that is set for this event (should be a user-centered event description)
     /// * `filename` ... Name of the source file where the event is set (Note: use `file!()`)
     /// * `line_nr` ... Line number where the event is set (Note: use `line!()`)
     /// * `module_path` ... Module path where the event is set (Note: use `module_path!()`)
@@ -60,17 +61,17 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         }
     }
 
-    /// Returns the [`LogId`] of this log-id event
+    /// Returns the [`Id`] of this event
     pub fn get_id(&self) -> &K {
         self.entry.get_event_id()
     }
 
-    /// Returns the name of the associated crate of this log-id event
+    /// Returns the name of the associated crate of this event
     pub fn get_crate_name(&self) -> &str {
         self.entry.get_crate_name()
     }
 
-    /// Returns the [`Entry`] of this log-id event
+    /// Returns the [`EventEntry`] of this event
     pub fn get_entry(&self) -> &T {
         &self.entry
     }

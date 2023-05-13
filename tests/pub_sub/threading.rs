@@ -145,7 +145,7 @@ fn set_events_in_many_threads() {
         assert_eq!(
             event.get_id(),
             &base_id,
-            "Received event {} has wrong LogId.",
+            "Received event {} has wrong Id.",
             i
         );
     }

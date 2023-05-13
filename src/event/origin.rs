@@ -1,15 +1,15 @@
-/// Structure representing the origin of a log-id.
+/// Structure representing the origin of an event.
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
     pub crate_name: String,
 
-    /// Module path where the log-id was set
+    /// Module path where the event was set
     pub module_path: String,
 
-    /// Filename where the log-id was set
+    /// Filename where the event was set
     pub filename: String,
 
-    /// Linenumber where the log-id was set
+    /// Line number where the event was set
     pub line_nr: u32,
 }
 

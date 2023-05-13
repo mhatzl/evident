@@ -1,3 +1,36 @@
+/// Macro to create a static publisher.
+///
+/// ## Usage
+///
+/// In the following example, text between `<>` is used as placeholder.\
+/// The visibility setting at the beginning is also **optional**.
+///
+/// ```ignore
+/// evident::create_static_publisher!(
+///     pub <Name for the publisher>,
+///     <Struct implementing `evident::publisher::Id`>,
+///     <Struct implementing `evident::event::EventEntry`>,
+///     <Struct implementing `evident::event::IntermediaryEvent`>,
+///     CAPTURE_CHANNEL_BOUND = <`usize` literal for the channel bound used to capture events>,
+///     SUBSCRIPTION_CHANNEL_BOUND = <`usize` literal for the channel bound used per subscription>,
+///     non_blocking = <`bool` literal defining if event finalizing should be non-blocking (`true`), or block the thread (`false`)>
+/// );
+/// ```
+///
+/// **Example with dummy implementations:**
+///
+/// ```ignore
+/// evident::create_static_publisher!(
+///     pub MY_PUBLISHER,
+///     MyId,
+///     MyEventEntry,
+///     MyIntermEvent,
+///     CAPTURE_CHANNEL_BOUND = 100,
+///     SUBSCRIPTION_CHANNEL_BOUND = 50,
+///     non_blocking = true
+/// );
+/// ```
+///
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
@@ -77,6 +110,9 @@ macro_rules! __create_static_publisher {
         }
 
         impl $interm_event_t {
+            /// Finalizing the event sends it to the publisher, and returns the Id of the event.
+            ///
+            /// Note: Finalizing prevents any further information to be added to the event.
             pub fn finalize(self) -> $id_t {
                 let id = $crate::event::entry::EventEntry::<$id_t>::get_event_id(
                     $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::get_entry(
@@ -104,6 +140,33 @@ macro_rules! __create_static_publisher {
     };
 }
 
+/// Macro to create the `set_event!()` macro for a concrete implementation.
+///
+/// ## Usage
+///
+/// In the following example, text between `<>` is used as placeholder.
+/// `no_export` may be set at the beginning to prevent `#[macro_export]` from being added.
+///
+/// Note: Set fully qualified paths to make the macro accessible from anywhere.
+///
+/// ```ignore
+/// evident::create_set_event_macro!(
+///     <Struct implementing `evident::publisher::Id`>,
+///     <Struct implementing `evident::event::EventEntry`>,
+///     <Struct implementing `evident::event::IntermediaryEvent`>
+/// );
+/// ```
+///
+/// **Example with dummy implementations:**
+///
+/// ```ignore
+/// evident::create_set_event_macro!(
+///     crate::my_mod::MyId,
+///     crate::my_mod::MyEventEntry,
+///     crate::my_mod::MyInterimEvent
+/// );
+/// ```
+///     
 #[macro_export]
 macro_rules! create_set_event_macro {
     ($id_t:ty,

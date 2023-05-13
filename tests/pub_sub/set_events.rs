@@ -5,7 +5,7 @@ use crate::pub_sub::setup::{
 #[test]
 fn set_event_has_correct_origin() {
     let id = MinId { id: 1 };
-    let msg = "Set first log message.";
+    let msg = "Set first message.";
 
     let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
@@ -54,7 +54,7 @@ fn set_event_has_correct_origin() {
 #[test]
 fn set_same_event_twice_with_different_origin() {
     let id = MinId { id: 1 };
-    let msg = "Set first log message.";
+    let msg = "Set first message.";
 
     let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
@@ -210,7 +210,7 @@ impl From<MinId> for TestLogId {
 
 #[test]
 fn set_event_with_enum() {
-    let msg = "Set first log message";
+    let msg = "Set first message";
 
     let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
 
