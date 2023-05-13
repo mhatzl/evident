@@ -10,7 +10,7 @@ pub struct Origin {
     pub filename: String,
 
     /// Linenumber where the log-id was set
-    pub line_nr: u32, 
+    pub line_nr: u32,
 }
 
 impl Origin {

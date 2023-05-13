@@ -42,7 +42,7 @@ impl EventEntry<MinId> for MinEventEntry {
     }
 
     fn get_crate_name(&self) -> &str {
-      &self.origin.crate_name
+        &self.origin.crate_name
     }
 
     fn get_origin(&self) -> &evident::event::origin::Origin {

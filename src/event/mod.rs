@@ -6,7 +6,6 @@ use self::{entry::EventEntry, intermediary::IntermediaryEvent};
 
 pub mod entry;
 pub mod intermediary;
-pub mod macros;
 pub mod origin;
 
 /// Trait to use [`LogId`] for tracing.

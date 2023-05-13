@@ -124,7 +124,7 @@ where
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
 {
-    pub fn new(on_event: impl Fn(Event<K, T>) + std::marker::Send + 'static) -> Self {
+    pub fn new(mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static) -> Self {
         let (send, recv) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
 
         thread::spawn(move || loop {
@@ -147,9 +147,7 @@ where
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        let _ = self
-            .capturer
-            .send(Event::new(interm_event.take_entry()));
+        let _ = self.capturer.send(Event::new(interm_event.take_entry()));
     }
 
     pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
@@ -223,7 +221,7 @@ where
         let mut bad_any_event: Vec<uuid::Uuid> = Vec::new();
 
         if let Ok(locked_subscriptions) = self.subscriptions.read() {
-            if let Some(sub_senders) = locked_subscriptions.get(&key) {
+            if let Some(sub_senders) = locked_subscriptions.get(key) {
                 for (channel_id, sub_sender) in sub_senders.iter() {
                     if sub_sender.sender.send(event.clone()).is_err() {
                         bad_subs.push(*channel_id);
@@ -261,40 +259,3 @@ where
         }
     }
 }
-
-#[macro_export]
-macro_rules! create_on_event {
-    ($publisher:ident, $id_type:ty, $entry_type:ty) => {
-        fn on_event(event: $crate::event::Event<$id_type, $entry_type>) {
-            $publisher.on_event(event);
-        }
-    };
-}
-
-// #[macro_export]
-// macro_rules! subscribe {
-//     ($logid:ident) => {
-//         $crate::publisher::subscribe($crate::logid!($logid), env!("CARGO_PKG_NAME"))
-//     };
-//     ($logid:expr) => {
-//         $crate::publisher::subscribe($crate::logid!($logid), env!("CARGO_PKG_NAME"))
-//     };
-// }
-
-// pub fn subscribe_to_logs<T>(log_ids: T, crate_name: &'static str) -> Option<Receiver<Event>>
-// where
-//     T: Iterator<Item = LogId>,
-// {
-//     let crate_logs = vec![(crate_name, log_ids.collect())];
-//     subscribe_to_crates(&crate_logs)
-// }
-
-// #[macro_export]
-// macro_rules! subscribe_to_logs {
-//     ($logids:ident) => {
-//         $crate::publisher::subscribe_to_logs($crate::logids!($logids), env!("CARGO_PKG_NAME"))
-//     };
-//     ($logids:expr) => {
-//         $crate::publisher::subscribe_to_logs($crate::logids!($logids), env!("CARGO_PKG_NAME"))
-//     };
-// }

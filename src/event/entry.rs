@@ -16,7 +16,7 @@ pub trait EventEntry<K: Id>: Default + Clone + Send + Sync + 'static {
 
     fn get_entry_id(&self) -> uuid::Uuid;
 
-    /// Get the main message set when creating the entry
+    /// Get the main message that was set when the event entry was created.
     fn get_msg(&self) -> &str;
 
     fn get_crate_name(&self) -> &str;

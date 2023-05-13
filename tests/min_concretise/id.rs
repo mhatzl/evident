@@ -1,4 +1,3 @@
-
 #[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Copy)]
 pub struct MinId {
     pub id: isize,
