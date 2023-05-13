@@ -100,3 +100,30 @@ fn subscribe_to_two_ids_at_once() {
         "Both events received the same id."
     );
 }
+
+#[test]
+fn receiver_for_all_events_two_events_set() {
+    let id_1 = MinId { id: 1 };
+    let msg_1 = "Set first message";
+    let id_2 = MinId { id: 2 };
+    let msg_2 = "Set second message";
+
+    let recv_all = TESTS_PUBLISHER.subscribe_to_all_events().unwrap();
+
+    set_event!(id_1, msg_1).finalize();
+    set_event!(id_2, msg_2).finalize();
+
+    let event_1 = recv_all
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+    assert_eq!(event_1.get_id(), &id_1, "Received event 1 has wrong Id.");
+    assert_eq!(event_1.get_msg(), msg_1, "Received event 1 has wrong msg.");
+
+    let event_2 = recv_all
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+    assert_eq!(event_2.get_id(), &id_2, "Received event 2 has wrong Id.");
+    assert_eq!(event_2.get_msg(), msg_2, "Received event 2 has wrong msg.");
+}

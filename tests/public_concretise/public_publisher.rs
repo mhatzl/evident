@@ -1,6 +1,7 @@
 use crate::public_concretise::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
 // Note: **pub** visibility modifier before the name of the publisher.
+// Note: **non_blocking = false** will block on `finalize()` (or implicitly on `drop`) until publisher received the event.
 evident::create_static_publisher!(
     pub PUB_PUBLISHER,
     MinId,
