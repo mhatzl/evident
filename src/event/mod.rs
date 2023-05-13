@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::publisher::Id;
 
-use self::{entry::EventEntry, intermediary::IntermediaryEvent};
+use self::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 
 pub mod entry;
 pub mod intermediary;
@@ -73,5 +73,18 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     /// Returns the [`Entry`] of this log-id event
     pub fn get_entry(&self) -> &T {
         &self.entry
+    }
+
+    pub fn get_entry_id(&self) -> uuid::Uuid {
+        self.entry.get_entry_id()
+    }
+
+    /// Get the main message that was set when the event entry was created.
+    pub fn get_msg(&self) -> &str {
+        self.entry.get_msg()
+    }
+
+    pub fn get_origin(&self) -> &Origin {
+        self.entry.get_origin()
     }
 }
