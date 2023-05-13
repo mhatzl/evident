@@ -7,7 +7,7 @@ fn set_event_has_correct_origin() {
     let id = MinId { id: 1 };
     let msg = "Set first log message.";
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     let line_nr = line!() + 1;
     set_event!(id, msg).finalize();
@@ -56,7 +56,7 @@ fn set_same_event_twice_with_different_origin() {
     let id = MinId { id: 1 };
     let msg = "Set first log message.";
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     let line_1 = line!() + 1;
     set_event!(id, msg).finalize();
@@ -100,7 +100,7 @@ fn set_same_event_twice_with_same_origin() {
     let msg = "Set first message";
     let line = line!();
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
         id,
@@ -151,7 +151,7 @@ fn set_same_event_twice_with_same_origin() {
 fn set_event_with_literal_msg() {
     let id = MinId { id: 1 };
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     set_event!(id, "Set event message").finalize();
 
@@ -171,7 +171,7 @@ fn set_event_with_literal_msg() {
 fn set_event_using_msg_expression() {
     let id = MinId { id: 1 };
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     set_event!(id, &format!("Set message with id={}", id)).finalize();
 
@@ -212,7 +212,7 @@ impl From<MinId> for TestLogId {
 fn set_event_with_enum() {
     let msg = "Set first log message";
 
-    let recv = TESTS_PUBLISHER.subscribe(&TestLogId::Id.into()).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
 
     set_event!(TestLogId::Id, msg).finalize();
 

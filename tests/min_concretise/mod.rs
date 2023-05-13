@@ -27,7 +27,7 @@ fn setup_minimal_publisher() {
     let some_id = MinId { id: 3 };
     let msg = "Some msg";
 
-    let sub = PUBLISHER.subscribe(&some_id).unwrap();
+    let sub = PUBLISHER.subscribe(some_id).unwrap();
 
     set_event!(some_id, msg).finalize();
 

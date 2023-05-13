@@ -14,7 +14,7 @@ fn setup_minimal_public_publisher() {
     let some_id = MinId { id: 3 };
     let msg = "Some msg";
 
-    let sub = PUB_PUBLISHER.subscribe(&some_id).unwrap();
+    let sub = PUB_PUBLISHER.subscribe(some_id).unwrap();
 
     set_event!(some_id, msg).finalize();
 

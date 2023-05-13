@@ -11,8 +11,8 @@ fn set_different_events_in_two_threads() {
     let id_main = MinId { id: 2 };
     let msg_main = "Set main thread message";
 
-    let recv_side = TESTS_PUBLISHER.subscribe(&id_side).unwrap();
-    let recv_main = TESTS_PUBLISHER.subscribe(&id_main).unwrap();
+    let recv_side = TESTS_PUBLISHER.subscribe(id_side).unwrap();
+    let recv_main = TESTS_PUBLISHER.subscribe(id_main).unwrap();
 
     let side_thread = thread::spawn(move || {
         set_event!(id_side, msg_side).finalize();
@@ -60,7 +60,7 @@ fn set_same_event_in_two_threads() {
     let msg_side = "Set side thread message";
     let msg_main = "Set main thread message";
 
-    let recv = TESTS_PUBLISHER.subscribe(&id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
     let side_thread = thread::spawn(move || {
         set_event!(id, msg_side).finalize();
@@ -108,7 +108,7 @@ fn set_events_in_many_threads() {
     let mut recvs = Vec::new();
     for i in 1..=THREAD_CNT {
         let loop_id = MinId { id: i };
-        recvs.push(TESTS_PUBLISHER.subscribe(&loop_id).unwrap());
+        recvs.push(TESTS_PUBLISHER.subscribe(loop_id).unwrap());
     }
 
     set_event!(base_id, msg).finalize();

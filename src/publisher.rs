@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
         mpsc::{self, SyncSender},
@@ -10,7 +10,7 @@ use std::{
 
 use crate::{
     event::{entry::EventEntry, intermediary::IntermediaryEvent, Event},
-    subscription::{Subscription, SubscriptionSender},
+    subscription::{Subscription, SubscriptionErr, SubscriptionSender},
 };
 
 pub trait Id:
@@ -74,11 +74,23 @@ where
             .try_send(Event::new(interm_event.take_entry()));
     }
 
-    pub fn subscribe(&self, id: &K) -> Option<Subscription<K, T>> {
-        self.subscribe_to_many(&vec![id])
+    pub fn subscribe(
+        &self,
+        id: K,
+    ) -> Result<
+        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
+        SubscriptionErr<K>,
+    > {
+        self.subscribe_to_many(vec![id])
     }
 
-    pub fn subscribe_to_many(&self, ids: &Vec<&K>) -> Option<Subscription<K, T>> {
+    pub fn subscribe_to_many(
+        &self,
+        ids: Vec<K>,
+    ) -> Result<
+        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
+        SubscriptionErr<K>,
+    > {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
@@ -87,8 +99,8 @@ where
 
         match self.subscriptions.write().ok() {
             Some(mut locked_subs) => {
-                for id in ids {
-                    let entry = locked_subs.entry((*id).clone());
+                for id in ids.clone() {
+                    let entry = locked_subs.entry((id).clone());
                     entry
                         .and_modify(|v| {
                             v.insert(subscription_sender.channel_id, subscription_sender.clone());
@@ -101,18 +113,25 @@ where
                 }
             }
             None => {
-                return None;
+                return Err(SubscriptionErr::CouldNotAccessPublisher);
             }
         }
 
-        Some(Subscription {
+        Ok(Subscription {
             channel_id,
             receiver,
             sub_to_all: false,
+            subscriptions: Some(HashSet::from_iter(ids)),
+            publisher: self,
         })
     }
 
-    pub fn subscribe_to_all_events(&self) -> Option<Subscription<K, T>> {
+    pub fn subscribe_to_all_events(
+        &self,
+    ) -> Result<
+        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
+        SubscriptionErr<K>,
+    > {
         let (sender, receiver) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
         let channel_id = uuid::Uuid::new_v4();
 
@@ -121,14 +140,16 @@ where
                 locked_vec.insert(channel_id, SubscriptionSender { channel_id, sender });
             }
             None => {
-                return None;
+                return Err(SubscriptionErr::CouldNotAccessPublisher);
             }
         }
 
-        Some(Subscription {
+        Ok(Subscription {
             channel_id,
             receiver,
             sub_to_all: true,
+            subscriptions: None,
+            publisher: self,
         })
     }
 
