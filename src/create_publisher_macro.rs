@@ -94,6 +94,13 @@ macro_rules! __create_static_publisher {
                 intermed_event.finalize()
             }
         }
+
+        impl PartialEq for $entry_t {
+            fn eq(&self, other: &Self) -> bool {
+                $crate::event::entry::EventEntry::<$id_t>::get_event_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_event_id(other)
+                && $crate::event::entry::EventEntry::<$id_t>::get_entry_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_entry_id(other)
+            }
+        }
     };
 }
 

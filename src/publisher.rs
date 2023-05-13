@@ -13,7 +13,10 @@ use crate::{
     subscription::{Subscription, SubscriptionSender},
 };
 
-pub trait Id: Default + Clone + Hash + PartialEq + Eq + Send + Sync + 'static {}
+pub trait Id:
+    core::fmt::Debug + Default + Clone + Hash + PartialEq + Eq + Send + Sync + 'static
+{
+}
 
 type Subscriber<K, T> = HashMap<uuid::Uuid, SubscriptionSender<K, T>>;
 

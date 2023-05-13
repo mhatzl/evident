@@ -88,3 +88,13 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         self.entry.get_origin()
     }
 }
+
+impl<K: Id, T: EventEntry<K>> core::fmt::Debug for Event<K, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Event")
+            .field("id", &self.entry.get_event_id())
+            .field("entry_id", &self.entry.get_entry_id())
+            .field("origin", &self.entry.get_origin())
+            .finish()
+    }
+}

@@ -55,7 +55,7 @@ fn set_different_events_in_two_threads() {
 }
 
 #[test]
-fn set_same_logid_in_two_threads() {
+fn set_same_event_in_two_threads() {
     let id = MinId { id: 1 };
     let msg_side = "Set side thread message";
     let msg_main = "Set main thread message";

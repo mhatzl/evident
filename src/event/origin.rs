@@ -26,11 +26,11 @@ impl Origin {
 }
 
 impl From<&Origin> for String {
-    /// Outputs given [`Origin`] as `file="<filename>", line=<line number>, module="<module path>"`.
+    /// Outputs given [`Origin`] as `crate="<crate name>", module="<module path>", file="<filename>", line=<line number>`.
     fn from(origin: &Origin) -> Self {
         format!(
-            "file=\"{}\", line={}, module=\"{}\"",
-            origin.filename, origin.line_nr, origin.module_path
+            "crate=\"{}\", module=\"{}\", file=\"{}\", line={}",
+            origin.crate_name, origin.module_path, origin.filename, origin.line_nr
         )
     }
 }
