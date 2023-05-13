@@ -1,8 +1,8 @@
 [package]
 name = "evident"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Pub/Sub framework using IDs to identify events."
+description = "Pub/Sub library using IDs to identify events."
 repository = "https://github.com/mhatzl/evident"
 license = "MIT"
 readme = "README.md"
