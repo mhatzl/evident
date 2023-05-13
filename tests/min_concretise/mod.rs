@@ -1,8 +1,8 @@
 use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
-pub mod entry;
-pub mod id;
-pub mod interim_event;
+mod entry;
+mod id;
+mod interim_event;
 
 evident::create_static_publisher!(
     PUBLISHER,
@@ -11,7 +11,15 @@ evident::create_static_publisher!(
     MinInterimEvent,
     CAPTURE_CHANNEL_BOUND = 1,
     SUBSCRIPTION_CHANNEL_BOUND = 1,
-    non - blocking = true
+    non_blocking = true
+);
+
+// Note: **no_export** to prevent the macro from adding `#[macro_export]`.
+evident::create_set_event_macro!(
+    no_export
+    MinId,
+    MinEventEntry,
+    MinInterimEvent
 );
 
 #[test]

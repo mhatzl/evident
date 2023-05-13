@@ -6,9 +6,9 @@ macro_rules! create_static_publisher {
         $interm_event_t:ty,
         CAPTURE_CHANNEL_BOUND = $cap_channel_bound:literal,
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
-        non-blocking = $try_capture:literal
+        non_blocking = $try_capture:literal
     ) => {
-        $crate::_create_static_publisher!($publisher_name,
+        $crate::__create_static_publisher!($publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
@@ -23,9 +23,9 @@ macro_rules! create_static_publisher {
         $interm_event_t:ty,
         CAPTURE_CHANNEL_BOUND = $cap_channel_bound:literal,
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
-        non-blocking = $try_capture:literal
+        non_blocking = $try_capture:literal
     ) => {
-        $crate::_create_static_publisher!($publisher_name,
+        $crate::__create_static_publisher!($publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
@@ -38,7 +38,7 @@ macro_rules! create_static_publisher {
 }
 
 #[macro_export]
-macro_rules! _create_static_publisher {
+macro_rules! __create_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
         $entry_t:ty,
@@ -94,15 +94,34 @@ macro_rules! _create_static_publisher {
                 intermed_event.finalize()
             }
         }
+    };
+}
 
-        /// Macro to set an event for the given id.
-        /// The environment variable `CARGO_PKG_NAME` set by cargo is used as crate name.
-        ///
-        /// **Arguments:**
-        ///
-        /// * `id` ... Must be a valid id for the associated publisher
-        /// * `msg` ... The main message for the event
+#[macro_export]
+macro_rules! create_set_event_macro {
+    ($id_t:ty,
+        $entry_t:ty,
+        $interm_event_t:ty
+    ) => {
         #[macro_export]
+        macro_rules! set_event {
+            ($id:expr, $msg:expr) => {
+                $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
+                    std::convert::Into::<$id_t>::into($id),
+                    ($msg).into(),
+                    env!("CARGO_PKG_NAME"),
+                    file!(),
+                    line!(),
+                    module_path!(),
+                )
+            };
+        }
+    };
+    (no_export
+        $id_t:ty,
+        $entry_t:ty,
+        $interm_event_t:ty
+    ) => {
         macro_rules! set_event {
             ($id:expr, $msg:expr) => {
                 $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
