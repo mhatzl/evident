@@ -115,7 +115,7 @@ macro_rules! create_set_event_macro {
             ($id:expr, $msg:expr) => {
                 $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
                     std::convert::Into::<$id_t>::into($id),
-                    ($msg).into(),
+                    $msg,
                     env!("CARGO_PKG_NAME"),
                     file!(),
                     line!(),
@@ -133,7 +133,7 @@ macro_rules! create_set_event_macro {
             ($id:expr, $msg:expr) => {
                 $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
                     std::convert::Into::<$id_t>::into($id),
-                    ($msg).into(),
+                    $msg,
                     env!("CARGO_PKG_NAME"),
                     file!(),
                     line!(),
