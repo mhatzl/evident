@@ -263,7 +263,7 @@ impl From<MinId> for TestLogId {
 fn set_event_with_enum() {
     let msg = "Set first message";
 
-    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id).unwrap();
 
     set_event!(TestLogId::Id, msg).finalize();
 
