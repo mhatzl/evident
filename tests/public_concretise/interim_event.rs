@@ -11,12 +11,12 @@ impl IntermediaryEvent<MinId, MinEventEntry> for MinInterimEvent {
         event_id: MinId,
         msg: &str,
         crate_name: &'static str,
-        filename: &str,
+        module_path: &'static str,
+        filename: &'static str,
         line_nr: u32,
-        module_path: &str,
     ) -> Self {
         MinInterimEvent {
-            entry: MinEventEntry::new(event_id, msg, crate_name, filename, line_nr, module_path),
+            entry: MinEventEntry::new(event_id, msg, crate_name, module_path, filename, line_nr),
         }
     }
 

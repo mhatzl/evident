@@ -104,20 +104,20 @@ fn set_same_event_twice_with_same_origin() {
 
     evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
         id,
-        env!("CARGO_PKG_NAME"),
         msg,
+        env!("CARGO_PKG_NAME"),
+        module_path!(),
         file!(),
         line,
-        module_path!(),
     )
     .finalize();
     evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
         id,
-        env!("CARGO_PKG_NAME"),
         msg,
+        env!("CARGO_PKG_NAME"),
+        module_path!(),
         file!(),
         line,
-        module_path!(),
     )
     .finalize();
 

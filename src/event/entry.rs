@@ -7,9 +7,9 @@ pub trait EventEntry<K: Id>: Default + Clone + Send + Sync + 'static {
         event_id: K,
         msg: &str,
         crate_name: &'static str,
-        filename: &str,
+        module_path: &'static str,
+        filename: &'static str,
         line_nr: u32,
-        module_path: &str,
     ) -> Self;
 
     fn get_event_id(&self) -> &K;

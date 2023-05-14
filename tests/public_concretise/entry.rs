@@ -16,9 +16,9 @@ impl EventEntry<MinId> for MinEventEntry {
         event_id: MinId,
         msg: &str,
         crate_name: &'static str,
-        filename: &str,
+        module_path: &'static str,
+        filename: &'static str,
         line_nr: u32,
-        module_path: &str,
     ) -> Self {
         MinEventEntry {
             event_id,

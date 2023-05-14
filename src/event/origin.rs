@@ -4,10 +4,10 @@ pub struct Origin {
     pub crate_name: &'static str,
 
     /// Module path where the event was set
-    pub module_path: String,
+    pub module_path: &'static str,
 
     /// Filename where the event was set
-    pub filename: String,
+    pub filename: &'static str,
 
     /// Line number where the event was set
     pub line_nr: u32,
@@ -15,11 +15,16 @@ pub struct Origin {
 
 impl Origin {
     /// Create a new [`Origin`].
-    pub fn new(crate_name: &'static str, module_path: &str, filename: &str, line_nr: u32) -> Self {
+    pub fn new(
+        crate_name: &'static str,
+        module_path: &'static str,
+        filename: &'static str,
+        line_nr: u32,
+    ) -> Self {
         Origin {
             crate_name,
-            module_path: module_path.to_string(),
-            filename: filename.to_string(),
+            module_path,
+            filename,
             line_nr,
         }
     }

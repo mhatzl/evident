@@ -180,9 +180,9 @@ macro_rules! create_set_event_macro {
                     std::convert::Into::<$id_t>::into($id),
                     $msg,
                     env!("CARGO_PKG_NAME"),
+                    module_path!(),
                     file!(),
                     line!(),
-                    module_path!(),
                 )
             };
         }
@@ -198,9 +198,9 @@ macro_rules! create_set_event_macro {
                     std::convert::Into::<$id_t>::into($id),
                     $msg,
                     env!("CARGO_PKG_NAME"),
+                    module_path!(),
                     file!(),
                     line!(),
-                    module_path!(),
                 )
             };
         }
