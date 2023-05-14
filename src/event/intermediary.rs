@@ -12,7 +12,7 @@ where
     fn new(
         event_id: K,
         msg: &str,
-        crate_name: &str,
+        crate_name: &'static str,
         filename: &str,
         line_nr: u32,
         module_path: &str,
@@ -28,7 +28,7 @@ where
     }
 
     /// Returns the name of the associated crate of this event
-    fn get_crate_name(&self) -> &str {
+    fn get_crate_name(&self) -> &'static str {
         self.get_entry().get_crate_name()
     }
 

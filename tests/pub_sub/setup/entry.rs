@@ -15,7 +15,7 @@ impl EventEntry<MinId> for MinEventEntry {
     fn new(
         event_id: MinId,
         msg: &str,
-        crate_name: &str,
+        crate_name: &'static str,
         filename: &str,
         line_nr: u32,
         module_path: &str,
@@ -41,7 +41,7 @@ impl EventEntry<MinId> for MinEventEntry {
         &self.msg
     }
 
-    fn get_crate_name(&self) -> &str {
+    fn get_crate_name(&self) -> &'static str {
         &self.origin.crate_name
     }
 

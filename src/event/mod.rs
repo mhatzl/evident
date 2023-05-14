@@ -22,8 +22,8 @@ pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
     /// * `module_path` ... Module path where the event is set (Note: use `module_path!()`)
     fn set_event(
         self,
-        crate_name: &str,
         msg: &str,
+        crate_name: &'static str,
         filename: &str,
         line_nr: u32,
         module_path: &str,
@@ -33,13 +33,13 @@ pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
 impl<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> EventFns<K, T, I> for K {
     fn set_event(
         self,
-        crate_name: &str,
         msg: &str,
+        crate_name: &'static str,
         filename: &str,
         line_nr: u32,
         module_path: &str,
     ) -> I {
-        I::new(self, crate_name, msg, filename, line_nr, module_path)
+        I::new(self, msg, crate_name, filename, line_nr, module_path)
     }
 }
 
@@ -67,7 +67,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     }
 
     /// Returns the name of the associated crate of this event
-    pub fn get_crate_name(&self) -> &str {
+    pub fn get_crate_name(&self) -> &'static str {
         self.entry.get_crate_name()
     }
 

@@ -10,7 +10,7 @@ impl IntermediaryEvent<MinId, MinEventEntry> for MinInterimEvent {
     fn new(
         event_id: MinId,
         msg: &str,
-        crate_name: &str,
+        crate_name: &'static str,
         filename: &str,
         line_nr: u32,
         module_path: &str,

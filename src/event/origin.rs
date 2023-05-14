@@ -1,7 +1,7 @@
 /// Structure representing the origin of an event.
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
-    pub crate_name: String,
+    pub crate_name: &'static str,
 
     /// Module path where the event was set
     pub module_path: String,
@@ -15,9 +15,9 @@ pub struct Origin {
 
 impl Origin {
     /// Create a new [`Origin`].
-    pub fn new(crate_name: &str, module_path: &str, filename: &str, line_nr: u32) -> Self {
+    pub fn new(crate_name: &'static str, module_path: &str, filename: &str, line_nr: u32) -> Self {
         Origin {
-            crate_name: crate_name.to_string(),
+            crate_name,
             module_path: module_path.to_string(),
             filename: filename.to_string(),
             line_nr,
