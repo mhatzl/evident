@@ -19,7 +19,7 @@ pub struct Subscription<
     K: Id,
     T: EventEntry<K>,
 {
-    pub(crate) channel_id: uuid::Uuid,
+    pub(crate) channel_id: crate::uuid::Uuid,
     pub(crate) receiver: Receiver<Event<K, T>>,
     pub(crate) sub_to_all: bool,
     pub(crate) subscriptions: Option<HashSet<K>>,
@@ -215,7 +215,7 @@ where
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
 {
-    pub(crate) channel_id: uuid::Uuid,
+    pub(crate) channel_id: crate::uuid::Uuid,
     pub(crate) sender: SyncSender<Event<K, T>>,
 }
 

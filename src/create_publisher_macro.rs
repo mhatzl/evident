@@ -81,14 +81,14 @@ macro_rules! __create_static_publisher {
         $try_capture:literal
         $(scope=$visibility:vis)?
     ) => {
-        $($visibility)? static $publisher_name: once_cell::sync::Lazy<
+        $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
             $crate::publisher::EvidentPublisher<
                 $id_t,
                 $entry_t,
                 $cap_channel_bound,
                 $sub_channel_bound,
             >,
-        > = once_cell::sync::Lazy::new(|| {
+        > = $crate::once_cell::sync::Lazy::new(|| {
             $crate::publisher::EvidentPublisher::<
                 $id_t,
                 $entry_t,

@@ -18,7 +18,7 @@ pub trait Id:
 {
 }
 
-type Subscriber<K, T> = HashMap<uuid::Uuid, SubscriptionSender<K, T>>;
+type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
 
 pub struct EvidentPublisher<
     K,
@@ -97,7 +97,7 @@ where
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) =
             mpsc::sync_channel(converted_ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
-        let channel_id = uuid::Uuid::new_v4();
+        let channel_id = crate::uuid::Uuid::new_v4();
         let subscription_sender = SubscriptionSender { channel_id, sender };
 
         match self.subscriptions.write().ok() {
@@ -136,7 +136,7 @@ where
         SubscriptionErr<K>,
     > {
         let (sender, receiver) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
-        let channel_id = uuid::Uuid::new_v4();
+        let channel_id = crate::uuid::Uuid::new_v4();
 
         match self.any_event.write().ok() {
             Some(mut locked_vec) => {
@@ -159,8 +159,8 @@ where
     pub fn on_event(&self, event: Event<K, T>) {
         let key = event.entry.get_event_id();
 
-        let mut bad_subs: Vec<uuid::Uuid> = Vec::new();
-        let mut bad_any_event: Vec<uuid::Uuid> = Vec::new();
+        let mut bad_subs: Vec<crate::uuid::Uuid> = Vec::new();
+        let mut bad_any_event: Vec<crate::uuid::Uuid> = Vec::new();
 
         if let Ok(locked_subscriptions) = self.subscriptions.read() {
             if let Some(sub_senders) = locked_subscriptions.get(key) {

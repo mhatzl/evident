@@ -7,7 +7,7 @@ pub struct MinEventEntry {
     event_id: MinId,
     msg: String,
 
-    entry_id: uuid::Uuid,
+    entry_id: evident::uuid::Uuid,
     origin: Origin,
 }
 
@@ -24,7 +24,7 @@ impl EventEntry<MinId> for MinEventEntry {
             event_id,
             msg: msg.to_string(),
 
-            entry_id: uuid::Uuid::new_v4(),
+            entry_id: evident::uuid::Uuid::new_v4(),
             origin: Origin::new(crate_name, module_path, filename, line_nr),
         }
     }
@@ -33,7 +33,7 @@ impl EventEntry<MinId> for MinEventEntry {
         &self.event_id
     }
 
-    fn get_entry_id(&self) -> uuid::Uuid {
+    fn get_entry_id(&self) -> evident::uuid::Uuid {
         self.entry_id
     }
 

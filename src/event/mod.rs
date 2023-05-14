@@ -76,7 +76,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         &self.entry
     }
 
-    pub fn get_entry_id(&self) -> uuid::Uuid {
+    pub fn get_entry_id(&self) -> crate::uuid::Uuid {
         self.entry.get_entry_id()
     }
 
