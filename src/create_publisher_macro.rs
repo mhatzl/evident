@@ -170,9 +170,9 @@ macro_rules! __create_static_publisher {
 ///
 /// ```ignore
 /// evident::create_set_event_macro!(
-///     crate::my_mod::MyId,
-///     crate::my_mod::MyEventEntry,
-///     crate::my_mod::MyInterimEvent
+///     my_crate::my_mod::MyId,
+///     my_crate::my_mod::MyEventEntry,
+///     my_crate::my_mod::MyInterimEvent
 /// );
 /// ```
 ///     
