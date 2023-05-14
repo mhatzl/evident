@@ -148,6 +148,57 @@ fn set_same_event_twice_with_same_origin() {
 }
 
 #[test]
+fn set_event_received_exactly_once_per_receiver() {
+    let id = MinId { id: 1 };
+    let msg = "Set event message";
+
+    let recv_1 = TESTS_PUBLISHER.subscribe(id).unwrap();
+    let recv_2 = TESTS_PUBLISHER.subscribe(id).unwrap();
+
+    set_event!(id, msg).finalize();
+
+    let recv_1_event_1 = recv_1
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+
+    assert_eq!(
+        recv_1_event_1.get_msg(),
+        msg,
+        "Event messages are not equal."
+    );
+
+    let recv_1_event_2 = recv_1
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10));
+
+    assert!(
+        recv_1_event_2.is_err(),
+        "Second event received, but only one was set."
+    );
+
+    let recv_2_event_1 = recv_2
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+
+    assert_eq!(
+        recv_2_event_1.get_msg(),
+        msg,
+        "Event messages are not equal."
+    );
+
+    let recv_2_event_2 = recv_2
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10));
+
+    assert!(
+        recv_2_event_2.is_err(),
+        "Second event received, but only one was set."
+    );
+}
+
+#[test]
 fn set_event_with_literal_msg() {
     let id = MinId { id: 1 };
 
