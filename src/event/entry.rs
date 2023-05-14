@@ -1,8 +1,10 @@
+use std::hash::Hash;
+
 use crate::publisher::Id;
 
 use super::origin::Origin;
 
-pub trait EventEntry<K: Id>: Default + Clone + Send + Sync + 'static {
+pub trait EventEntry<K: Id>: Default + Clone + Hash + Send + Sync + 'static {
     fn new(
         event_id: K,
         msg: &str,
