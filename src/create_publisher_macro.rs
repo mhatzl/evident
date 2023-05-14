@@ -41,7 +41,7 @@ macro_rules! create_static_publisher {
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
         non_blocking = $try_capture:literal
     ) => {
-        $crate::__create_static_publisher!($publisher_name,
+        $crate::z__create_static_publisher!($publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
@@ -58,7 +58,7 @@ macro_rules! create_static_publisher {
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
         non_blocking = $try_capture:literal
     ) => {
-        $crate::__create_static_publisher!($publisher_name,
+        $crate::z__create_static_publisher!($publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
@@ -71,7 +71,7 @@ macro_rules! create_static_publisher {
 }
 
 #[macro_export]
-macro_rules! __create_static_publisher {
+macro_rules! z__create_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
         $entry_t:ty,
