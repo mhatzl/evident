@@ -138,6 +138,8 @@ macro_rules! __create_static_publisher {
             }
         }
 
+        impl Eq for $entry_t {}
+
         impl std::hash::Hash for $entry_t
         {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
