@@ -5,14 +5,7 @@ use crate::publisher::Id;
 use super::origin::Origin;
 
 pub trait EventEntry<K: Id>: Default + Clone + Hash + Send + Sync + 'static {
-    fn new(
-        event_id: K,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> Self;
+    fn new(event_id: K, msg: &str, origin: Origin) -> Self;
 
     fn get_event_id(&self) -> &K;
 

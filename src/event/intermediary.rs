@@ -1,6 +1,6 @@
 use crate::publisher::Id;
 
-use super::entry::EventEntry;
+use super::{entry::EventEntry, origin::Origin};
 
 #[allow(drop_bounds)]
 pub trait IntermediaryEvent<K, T>: Drop
@@ -9,14 +9,7 @@ where
     K: Id,
     T: EventEntry<K>,
 {
-    fn new(
-        event_id: K,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> Self;
+    fn new(event_id: K, msg: &str, origin: Origin) -> Self;
 
     fn get_entry(&self) -> &T;
 

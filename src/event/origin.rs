@@ -1,15 +1,22 @@
 /// Structure representing the origin of an event.
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
+    /// Name of the crate the event was set.
     pub crate_name: &'static str,
 
-    /// Module path where the event was set
+    /// Module path where the event was set.
+    ///
+    /// Note: Use `module_path!()`.
     pub module_path: &'static str,
 
-    /// Filename where the event was set
+    /// Filename where the event was set.
+    ///
+    /// Note: Use `file!()`.
     pub filename: &'static str,
 
-    /// Line number where the event was set
+    /// Line number where the event was set.
+    ///
+    /// Note: Use `line!()`.
     pub line_nr: u32,
 }
 
@@ -44,4 +51,11 @@ impl core::fmt::Display for Origin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", String::from(self))
     }
+}
+
+#[macro_export]
+macro_rules! this_origin {
+    () => {
+        $crate::event::origin::Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line!())
+    };
 }

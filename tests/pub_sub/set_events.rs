@@ -1,3 +1,5 @@
+use evident::event::origin::Origin;
+
 use crate::pub_sub::setup::{
     entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent, TESTS_PUBLISHER,
 };
@@ -105,19 +107,13 @@ fn set_same_event_twice_with_same_origin() {
     evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
         id,
         msg,
-        env!("CARGO_PKG_NAME"),
-        module_path!(),
-        file!(),
-        line,
+        Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
     )
     .finalize();
     evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
         id,
         msg,
-        env!("CARGO_PKG_NAME"),
-        module_path!(),
-        file!(),
-        line,
+        Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
     )
     .finalize();
 

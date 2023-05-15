@@ -15,31 +15,14 @@ pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
     ///
     /// # Arguments
     ///
-    /// * `crate_name` ... Name of the crate the event should be associated with
-    /// * `module_path` ... Module path where the event is set (Note: use `module_path!()`)
     /// * `msg` ... Main message that is set for this event (should be a user-centered event description)
-    /// * `filename` ... Name of the source file where the event is set (Note: use `file!()`)
-    /// * `line_nr` ... Line number where the event is set (Note: use `line!()`)
-    fn set_event(
-        self,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> I;
+    /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
+    fn set_event(self, msg: &str, origin: Origin) -> I;
 }
 
 impl<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> EventFns<K, T, I> for K {
-    fn set_event(
-        self,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> I {
-        I::new(self, msg, crate_name, module_path, filename, line_nr)
+    fn set_event(self, msg: &str, origin: Origin) -> I {
+        I::new(self, msg, origin)
     }
 }
 

@@ -12,20 +12,13 @@ pub struct MinEventEntry {
 }
 
 impl EventEntry<MinId> for MinEventEntry {
-    fn new(
-        event_id: MinId,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> Self {
+    fn new(event_id: MinId, msg: &str, origin: Origin) -> Self {
         MinEventEntry {
             event_id,
             msg: msg.to_string(),
 
             entry_id: evident::uuid::Uuid::new_v4(),
-            origin: Origin::new(crate_name, module_path, filename, line_nr),
+            origin,
         }
     }
 

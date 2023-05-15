@@ -1,4 +1,4 @@
-use evident::event::{entry::EventEntry, intermediary::IntermediaryEvent};
+use evident::event::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 
 use super::{entry::MinEventEntry, id::MinId};
 
@@ -7,16 +7,9 @@ pub struct MinInterimEvent {
 }
 
 impl IntermediaryEvent<MinId, MinEventEntry> for MinInterimEvent {
-    fn new(
-        event_id: MinId,
-        msg: &str,
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> Self {
+    fn new(event_id: MinId, msg: &str, origin: Origin) -> Self {
         MinInterimEvent {
-            entry: MinEventEntry::new(event_id, msg, crate_name, module_path, filename, line_nr),
+            entry: MinEventEntry::new(event_id, msg, origin),
         }
     }
 
