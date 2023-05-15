@@ -118,7 +118,7 @@ macro_rules! z__create_static_publisher {
 
         impl From<$interm_event_t> for $id_t {
             fn from(intermed_event: $interm_event_t) -> Self {
-                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(intermed_event).get_event_id().clone()
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(intermed_event).into_event_id()
             }
         }
 

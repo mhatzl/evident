@@ -32,13 +32,17 @@ where
         self.get_entry().get_crate_name()
     }
 
-    /// Finalizing the event sends it to the publisher, and returns the [`Id`] of the event.
+    /// Finalizing the event sends it to the publisher, and returns the [`CapturedEvent`].
+    /// This struct includes the [`Id`] used to set the event, and the id of the specific [`EventEntry`]
+    /// associated with this event.
     ///  
     /// Note: Finalizing prevents any further information to be added to the event.
     fn finalize(self) -> CapturedEvent<K> {
+        let entry_id = self.get_entry().get_entry_id();
         let captured_event = CapturedEvent {
+            // Note: Not cloning here would not fully drop the event => no event would be captured.
             event_id: self.get_entry().get_event_id().clone(),
-            entry_id: self.get_entry().get_entry_id(),
+            entry_id,
         };
         drop(self);
         captured_event
@@ -55,7 +59,11 @@ impl<K: Id> CapturedEvent<K> {
         &self.event_id
     }
 
-    pub fn get_emtry_id(&self) -> crate::uuid::Uuid {
+    pub fn into_event_id(self) -> K {
+        self.event_id
+    }
+
+    pub fn get_entry_id(&self) -> crate::uuid::Uuid {
         self.entry_id
     }
 }

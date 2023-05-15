@@ -103,7 +103,7 @@ where
         match self.subscriptions.write().ok() {
             Some(mut locked_subs) => {
                 for id in converted_ids.clone() {
-                    let entry = locked_subs.entry((id).clone());
+                    let entry = locked_subs.entry(id.clone());
                     entry
                         .and_modify(|v| {
                             v.insert(subscription_sender.channel_id, subscription_sender.clone());
