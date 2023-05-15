@@ -42,6 +42,7 @@ where
     }
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct CapturedEvent<K> {
     pub(crate) event_id: K,
     pub(crate) entry_id: crate::uuid::Uuid,
