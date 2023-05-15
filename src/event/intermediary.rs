@@ -44,20 +44,12 @@ where
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct CapturedEvent<K> {
-    pub(crate) event_id: K,
-    pub(crate) entry_id: crate::uuid::Uuid,
+    pub event_id: K,
+    pub entry_id: crate::uuid::Uuid,
 }
 
 impl<K: Id> CapturedEvent<K> {
-    pub fn get_event_id(&self) -> &K {
-        &self.event_id
-    }
-
     pub fn into_event_id(self) -> K {
         self.event_id
-    }
-
-    pub fn get_entry_id(&self) -> crate::uuid::Uuid {
-        self.entry_id
     }
 }
