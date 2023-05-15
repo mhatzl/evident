@@ -109,25 +109,16 @@ macro_rules! z__create_static_publisher {
             }
         }
 
+        // Note: Re-impl `finalize()` for better IntelliSense.
         impl $interm_event_t {
-            /// Finalizing the event sends it to the publisher, and returns the Id of the event.
-            ///
-            /// Note: Finalizing prevents any further information to be added to the event.
-            pub fn finalize(self) -> $id_t {
-                let id = $crate::event::entry::EventEntry::<$id_t>::get_event_id(
-                    $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::get_entry(
-                        &self,
-                    ),
-                )
-                .clone();
-                drop(self);
-                id
+            pub fn finalize(self) -> $crate::event::intermediary::CapturedEvent<$id_t> {
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(self)
             }
         }
 
         impl From<$interm_event_t> for $id_t {
             fn from(intermed_event: $interm_event_t) -> Self {
-                intermed_event.finalize()
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(intermed_event).get_event_id().clone()
             }
         }
 

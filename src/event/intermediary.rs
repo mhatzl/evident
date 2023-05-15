@@ -35,9 +35,27 @@ where
     /// Finalizing the event sends it to the publisher, and returns the [`Id`] of the event.
     ///  
     /// Note: Finalizing prevents any further information to be added to the event.
-    fn finalize(self) -> K {
-        let id = self.get_entry().get_event_id().clone();
+    fn finalize(self) -> CapturedEvent<K> {
+        let captured_event = CapturedEvent {
+            event_id: self.get_entry().get_event_id().clone(),
+            entry_id: self.get_entry().get_entry_id(),
+        };
         drop(self);
-        id
+        captured_event
+    }
+}
+
+pub struct CapturedEvent<K> {
+    pub(crate) event_id: K,
+    pub(crate) entry_id: crate::uuid::Uuid,
+}
+
+impl<K: Id> CapturedEvent<K> {
+    pub fn get_event_id(&self) -> &K {
+        &self.event_id
+    }
+
+    pub fn get_emtry_id(&self) -> crate::uuid::Uuid {
+        self.entry_id
     }
 }
