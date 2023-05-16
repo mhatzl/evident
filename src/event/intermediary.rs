@@ -2,8 +2,7 @@ use crate::publisher::Id;
 
 use super::{entry::EventEntry, origin::Origin};
 
-#[allow(drop_bounds)]
-pub trait IntermediaryEvent<K, T>: Drop
+pub trait IntermediaryEvent<K, T>
 where
     Self: std::marker::Sized,
     K: Id,
