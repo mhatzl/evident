@@ -57,6 +57,10 @@ impl<K: Id> FinalizedEvent<K> {
     }
 
     pub fn into_event_id(self) -> K {
-        self.event_id.into()
+        self.event_id
+    }
+
+    pub fn get_entry_id(&self) -> &crate::uuid::Uuid {
+        &self.entry_id
     }
 }
