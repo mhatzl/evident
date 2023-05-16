@@ -8,14 +8,14 @@ pub mod entry;
 pub mod intermediary;
 pub mod origin;
 
-/// Set an event for an [`Id`].
+/// Set an event for an [`Id`] with an explicit message.
 ///
 /// # Arguments
 ///
 /// * `event_id` ... The [`Id`] used for this event
 /// * `msg` ... Main message that is set for this event (should be a user-centered event description)
 /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-pub fn set_event_with<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+pub fn set_event_with_msg<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
     event_id: K,
     msg: &str,
     origin: Origin,

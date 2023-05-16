@@ -104,13 +104,13 @@ fn set_same_event_twice_with_same_origin() {
 
     let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
-    evident::event::set_event_with::<MinId, MinEventEntry, MinInterimEvent>(
+    evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
     )
     .finalize();
-    evident::event::set_event_with::<MinId, MinEventEntry, MinInterimEvent>(
+    evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),

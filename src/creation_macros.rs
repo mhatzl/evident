@@ -182,7 +182,7 @@ macro_rules! create_set_event_macro {
                 )
             };
             ($id:expr, $msg:expr) => {
-                $crate::event::set_event_with::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event_with_msg::<$id_t, $entry_t, $interm_event_t>(
                     $id,
                     $msg,
                     $crate::this_origin!(),
@@ -203,7 +203,7 @@ macro_rules! create_set_event_macro {
                 )
             };
             ($id:expr, $msg:expr) => {
-                $crate::event::set_event_with::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event_with_msg::<$id_t, $entry_t, $interm_event_t>(
                     $id,
                     $msg,
                     $crate::this_origin!(),
