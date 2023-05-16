@@ -76,7 +76,7 @@ where
 
     pub fn subscribe(
         &self,
-        id: impl Into<K>,
+        id: K,
     ) -> Result<
         Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
         SubscriptionErr<K>,
@@ -86,23 +86,20 @@ where
 
     pub fn subscribe_to_many(
         &self,
-        ids: Vec<impl Into<K>>,
+        ids: Vec<K>,
     ) -> Result<
         Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
         SubscriptionErr<K>,
     > {
-        let converted_ids: Vec<K> = ids.into_iter().map(|i| i.into()).collect();
-
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
-        let (sender, receiver) =
-            mpsc::sync_channel(converted_ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
+        let (sender, receiver) = mpsc::sync_channel(ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
         let channel_id = crate::uuid::Uuid::new_v4();
         let subscription_sender = SubscriptionSender { channel_id, sender };
 
         match self.subscriptions.write().ok() {
             Some(mut locked_subs) => {
-                for id in converted_ids.clone() {
+                for id in ids.clone() {
                     let entry = locked_subs.entry(id.clone());
                     entry
                         .and_modify(|v| {
@@ -124,7 +121,7 @@ where
             channel_id,
             receiver,
             sub_to_all: false,
-            subscriptions: Some(HashSet::from_iter(converted_ids)),
+            subscriptions: Some(HashSet::from_iter(ids)),
             publisher: self,
         })
     }

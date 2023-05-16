@@ -104,13 +104,13 @@ fn set_same_event_twice_with_same_origin() {
 
     let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
-    evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
+    evident::event::set_event_with::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
     )
     .finalize();
-    evident::event::EventFns::<MinId, MinEventEntry, MinInterimEvent>::set_event(
+    evident::event::set_event_with::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
@@ -234,6 +234,7 @@ fn set_event_using_msg_expression() {
     );
 }
 
+#[derive(Clone)]
 enum TestLogId {
     Id = 1,
 }
@@ -259,9 +260,9 @@ impl From<MinId> for TestLogId {
 fn set_event_with_enum() {
     let msg = "Set first message";
 
-    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id).unwrap();
+    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
 
-    set_event!(TestLogId::Id, msg).finalize();
+    set_event!(TestLogId::Id.into(), msg).finalize();
 
     let event = recv
         .get_receiver()

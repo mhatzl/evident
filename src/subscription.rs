@@ -41,11 +41,11 @@ where
         drop(self)
     }
 
-    pub fn unsubscribe_id(&mut self, id: impl Into<K>) -> Result<(), SubscriptionErr<K>> {
+    pub fn unsubscribe_id(&mut self, id: K) -> Result<(), SubscriptionErr<K>> {
         self.unsubscribe_many(vec![id])
     }
 
-    pub fn unsubscribe_many(&mut self, ids: Vec<impl Into<K>>) -> Result<(), SubscriptionErr<K>> {
+    pub fn unsubscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionErr<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
             return Err(SubscriptionErr::AllEventsSubscriptionNotModifiable);
         }
@@ -56,9 +56,7 @@ where
             return Err(SubscriptionErr::UnsubscribeWouldDeleteSubscription);
         }
 
-        let converted_ids: Vec<K> = ids.into_iter().map(|i| i.into()).collect();
-
-        for id in converted_ids.clone() {
+        for id in ids.clone() {
             if !subs.contains(&id) {
                 return Err(SubscriptionErr::IdNotSubscribed(id));
             }
@@ -66,7 +64,7 @@ where
 
         match self.publisher.subscriptions.write() {
             Ok(mut publisher_subs) => {
-                for id in converted_ids {
+                for id in ids {
                     if let Some(id_sub) = publisher_subs.get_mut(&id) {
                         let _ = id_sub.remove(&self.channel_id);
                     }
@@ -79,19 +77,18 @@ where
         }
     }
 
-    pub fn subscribe_id(&mut self, id: impl Into<K>) -> Result<(), SubscriptionErr<K>> {
+    pub fn subscribe_id(&mut self, id: K) -> Result<(), SubscriptionErr<K>> {
         self.subscribe_many(vec![id])
     }
 
-    pub fn subscribe_many(&mut self, ids: Vec<impl Into<K>>) -> Result<(), SubscriptionErr<K>> {
+    pub fn subscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionErr<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
             return Err(SubscriptionErr::AllEventsSubscriptionNotModifiable);
         }
 
         let subs = self.subscriptions.as_mut().unwrap();
-        let converted_ids: Vec<K> = ids.into_iter().map(|i| i.into()).collect();
 
-        for id in converted_ids.clone() {
+        for id in ids.clone() {
             if subs.contains(&id) {
                 return Err(SubscriptionErr::IdAlreadySubscribed(id));
             }
@@ -122,7 +119,7 @@ where
 
         match self.publisher.subscriptions.write() {
             Ok(mut publisher_subs) => {
-                for id in converted_ids {
+                for id in ids {
                     publisher_subs
                         .entry(id.clone())
                         .and_modify(|id_subs| {

@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{fmt::Display, marker::PhantomData};
 
 use crate::publisher::Id;
 
@@ -8,22 +8,33 @@ pub mod entry;
 pub mod intermediary;
 pub mod origin;
 
-/// Trait to create an [`IntermediaryEvent<K, T>`] that is captured by a publisher once the event is either
-/// explicitly `finalized`, or implicitly dropped.
-pub trait EventFns<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> {
-    /// Set an event for an [`Id`].
-    ///
-    /// # Arguments
-    ///
-    /// * `msg` ... Main message that is set for this event (should be a user-centered event description)
-    /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-    fn set_event(self, msg: &str, origin: Origin) -> I;
+/// Set an event for an [`Id`].
+///
+/// # Arguments
+///
+/// * `event_id` ... The [`Id`] used for this event
+/// * `msg` ... Main message that is set for this event (should be a user-centered event description)
+/// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
+pub fn set_event_with<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+    event_id: K,
+    msg: &str,
+    origin: Origin,
+) -> I {
+    I::new(event_id, msg, origin)
 }
 
-impl<K: Id, T: EventEntry<K>, I: IntermediaryEvent<K, T>> EventFns<K, T, I> for K {
-    fn set_event(self, msg: &str, origin: Origin) -> I {
-        I::new(self, msg, origin)
-    }
+/// Set an event for an [`Id`].
+///
+/// # Arguments
+///
+/// * `event_id` ... The [`Id`] used for this event (`to_string()` of the given [`Id`] is used for the event message)
+/// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
+pub fn set_event<K: Id + Display, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+    event_id: K,
+    origin: Origin,
+) -> I {
+    let msg = event_id.to_string();
+    I::new(event_id, &msg, origin)
 }
 
 #[derive(Default, Clone, PartialEq, Eq)]

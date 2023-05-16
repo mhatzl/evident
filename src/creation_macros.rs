@@ -111,7 +111,7 @@ macro_rules! z__create_static_publisher {
 
         // Note: Re-impl `finalize()` for better IntelliSense.
         impl $interm_event_t {
-            pub fn finalize(self) -> $crate::event::intermediary::CapturedEvent<$id_t> {
+            pub fn finalize(self) -> $crate::event::intermediary::FinalizedEvent<$id_t> {
                 $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(self)
             }
         }
@@ -175,9 +175,15 @@ macro_rules! create_set_event_macro {
     ) => {
         #[macro_export]
         macro_rules! set_event {
+            ($id:expr) => {
+                $crate::event::set_event::<$id_t, $entry_t, $interm_event_t>(
+                    $id,
+                    $crate::this_origin!(),
+                )
+            };
             ($id:expr, $msg:expr) => {
-                $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
-                    std::convert::Into::<$id_t>::into($id),
+                $crate::event::set_event_with::<$id_t, $entry_t, $interm_event_t>(
+                    $id,
                     $msg,
                     $crate::this_origin!(),
                 )
@@ -190,9 +196,15 @@ macro_rules! create_set_event_macro {
         $interm_event_t:ty
     ) => {
         macro_rules! set_event {
+            ($id:expr) => {
+                $crate::event::set_event::<$id_t, $entry_t, $interm_event_t>(
+                    $id,
+                    $crate::this_origin!(),
+                )
+            };
             ($id:expr, $msg:expr) => {
-                $crate::event::EventFns::<$id_t, $entry_t, $interm_event_t>::set_event(
-                    std::convert::Into::<$id_t>::into($id),
+                $crate::event::set_event_with::<$id_t, $entry_t, $interm_event_t>(
+                    $id,
                     $msg,
                     $crate::this_origin!(),
                 )
