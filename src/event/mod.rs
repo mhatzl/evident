@@ -95,7 +95,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     }
 
     pub fn get_thread_name(&self) -> Option<&str> {
-        self.thread_name.as_ref().map(|x| x.as_str())
+        self.thread_name.as_deref()
     }
 
     pub fn get_creation_datetime(&self) -> &crate::chrono::DateTime<crate::chrono::offset::Utc> {
