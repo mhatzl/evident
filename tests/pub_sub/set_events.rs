@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use evident::event::origin::Origin;
 
 use crate::pub_sub::setup::{
@@ -270,4 +272,70 @@ fn set_event_with_enum() {
         .unwrap();
 
     assert_eq!(*event.get_id(), TestLogId::Id.into(), "Ids are not equal");
+}
+
+#[test]
+fn set_event_has_current_thread_id() {
+    let msg = "Set first message";
+
+    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
+    let thread_id = std::thread::current().id();
+
+    set_event!(TestLogId::Id.into(), msg).finalize();
+
+    let event = recv
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+
+    assert_eq!(*event.get_thread_id(), thread_id, "ThreadIds are not equal");
+}
+
+#[test]
+fn spawned_set_event_has_different_thread_id() {
+    let msg = "Set first message";
+
+    let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
+    let thread_id = std::thread::current().id();
+
+    std::thread::spawn(|| {
+        set_event!(TestLogId::Id.into(), msg).finalize();
+    });
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    let event = recv
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+
+    assert_ne!(*event.get_thread_id(), thread_id, "ThreadIds are equal");
+}
+
+#[test]
+fn datetime_of_second_event_is_greater() {
+    let id = MinId { id: 1 };
+    let msg = "Set first message.";
+
+    let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
+
+    set_event!(id, msg).finalize();
+    set_event!(id, msg).finalize();
+
+    let event_1 = recv
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+    let event_2 = recv
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(10))
+        .unwrap();
+
+    assert_eq!(
+        event_2
+            .get_creation_datetime()
+            .cmp(event_1.get_creation_datetime()),
+        Ordering::Greater,
+        "Datetime of second event is not greater than first event."
+    );
 }

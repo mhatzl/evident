@@ -37,7 +37,7 @@ pub fn set_event<K: Id + Display, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
     I::new(event_id, &msg, origin)
 }
 
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Event<K, T>
 where
     K: Id,
@@ -45,24 +45,31 @@ where
 {
     pub(crate) entry: T,
     phantom: PhantomData<K>,
+
+    thread_id: std::thread::ThreadId,
+    thread_name: Option<String>,
+
+    creation_dt_utc: crate::chrono::DateTime<crate::chrono::offset::Utc>,
 }
 
 impl<K: Id, T: EventEntry<K>> Event<K, T> {
     pub(crate) fn new(entry: T) -> Self {
+        let curr_thread = std::thread::current();
+
         Event {
             entry,
             phantom: PhantomData,
+
+            thread_id: curr_thread.id(),
+            thread_name: curr_thread.name().map(|s| s.to_string()),
+
+            creation_dt_utc: chrono::Utc::now(),
         }
     }
 
     /// Returns the [`Id`] of this event
     pub fn get_id(&self) -> &K {
         self.entry.get_event_id()
-    }
-
-    /// Returns the name of the associated crate of this event
-    pub fn get_crate_name(&self) -> &'static str {
-        self.entry.get_crate_name()
     }
 
     /// Returns the [`EventEntry`] of this event
@@ -81,6 +88,18 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
 
     pub fn get_origin(&self) -> &Origin {
         self.entry.get_origin()
+    }
+
+    pub fn get_thread_id(&self) -> &std::thread::ThreadId {
+        &self.thread_id
+    }
+
+    pub fn get_thread_name(&self) -> Option<&str> {
+        self.thread_name.as_ref().map(|x| x.as_str())
+    }
+
+    pub fn get_creation_datetime(&self) -> &crate::chrono::DateTime<crate::chrono::offset::Utc> {
+        &self.creation_dt_utc
     }
 }
 
