@@ -32,7 +32,7 @@ pub struct EvidentPublisher<
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
-    pub(crate) capturer: SyncSender<Event<K, T>>,
+    pub(crate) capturer: Arc<RwLock<Option<SyncSender<Event<K, T>>>>>,
 }
 
 impl<K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize>
@@ -60,18 +60,30 @@ where
         EvidentPublisher {
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             any_event: Arc::new(RwLock::new(HashMap::new())),
-            capturer: send,
+            capturer: Arc::new(RwLock::new(Some(send))),
         }
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        let _ = self.capturer.send(Event::new(interm_event.take_entry()));
+        if let Ok(locked_cap) = self.capturer.try_read() {
+            if locked_cap.is_some() {
+                let _ = locked_cap
+                    .as_ref()
+                    .unwrap()
+                    .send(Event::new(interm_event.take_entry()));
+            }
+        }
     }
 
     pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        let _ = self
-            .capturer
-            .try_send(Event::new(interm_event.take_entry()));
+        if let Ok(locked_cap) = self.capturer.try_read() {
+            if locked_cap.is_some() {
+                let _ = locked_cap
+                    .as_ref()
+                    .unwrap()
+                    .try_send(Event::new(interm_event.take_entry()));
+            }
+        }
     }
 
     pub fn subscribe(
@@ -151,6 +163,20 @@ where
             subscriptions: None,
             publisher: self,
         })
+    }
+
+    pub fn shutdown(&self) {
+        if let Ok(mut locked_subscriptions) = self.subscriptions.write() {
+            locked_subscriptions.drain();
+        }
+
+        if let Ok(mut locked_vec) = self.any_event.write() {
+            locked_vec.drain();
+        }
+
+        if let Ok(mut locked_cap) = self.capturer.write() {
+            *locked_cap = None;
+        }
     }
 
     pub fn on_event(&self, event: Event<K, T>) {
