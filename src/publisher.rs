@@ -19,6 +19,7 @@ pub trait Id:
 }
 
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
+type Capturer<K, T> = Option<SyncSender<Event<K, T>>>;
 
 pub struct EvidentPublisher<
     K,
@@ -32,7 +33,7 @@ pub struct EvidentPublisher<
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
-    pub(crate) capturer: Arc<RwLock<Option<SyncSender<Event<K, T>>>>>,
+    pub(crate) capturer: Arc<RwLock<Capturer<K, T>>>,
 }
 
 impl<K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize>
