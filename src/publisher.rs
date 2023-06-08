@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
-        mpsc::{self, SyncSender},
+        mpsc::{self, Receiver, SyncSender},
         Arc, RwLock,
     },
     thread,
@@ -18,12 +18,28 @@ pub trait Id:
 {
 }
 
+/// Trait to implement for [`Id`], to notify the publisher and all listeners to stop capturing events.
+pub trait StopCapturing {
+    /// Returns `true` if the given [`Id`] is used to signal the end of event capturing.
+    ///
+    /// **Possible implementation:**
+    ///
+    /// ```
+    /// if id == &STOP_CAPTURING_ID {
+    ///     return true;
+    /// }
+    ///
+    /// false
+    /// ```
+    fn stop_capturing(id: &Self) -> bool;
+}
+
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
 type Capturer<K, T> = Option<SyncSender<Event<K, T>>>;
 
 pub struct EvidentPublisher<K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
 {
@@ -36,7 +52,7 @@ where
 
 impl<K, T> EvidentPublisher<K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
 {
@@ -45,16 +61,18 @@ where
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
     ) -> Self {
-        let (send, recv) = mpsc::sync_channel(capture_channel_bound);
+        let (send, recv): (SyncSender<Event<K, T>>, Receiver<Event<K, T>>) =
+            mpsc::sync_channel(capture_channel_bound);
 
-        thread::spawn(move || loop {
-            match recv.recv() {
-                Ok(event) => {
-                    on_event(event);
-                }
-                Err(_) => {
-                    // Sender got dropped => Publisher got dropped
-                    return;
+        thread::spawn(move || {
+            while let Ok(event) = recv.recv() {
+                let id = event.get_id().clone();
+
+                on_event(event);
+
+                // Note: `on_event` must still be called to notify all listeners to stop aswell
+                if StopCapturing::stop_capturing(&id) {
+                    break;
                 }
             }
         });

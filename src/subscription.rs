@@ -6,12 +6,12 @@ use std::{
 
 use crate::{
     event::{entry::EventEntry, Event},
-    publisher::{EvidentPublisher, Id},
+    publisher::{EvidentPublisher, Id, StopCapturing},
 };
 
 pub struct Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
     pub(crate) channel_id: crate::uuid::Uuid,
@@ -23,7 +23,7 @@ where
 
 impl<'p, K, T> Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
     pub fn get_receiver(&self) -> &Receiver<Event<K, T>> {
@@ -136,7 +136,7 @@ where
 
 impl<'p, K, T> Drop for Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
     fn drop(&mut self) {
@@ -159,7 +159,7 @@ where
 
 impl<'p, K, T> PartialEq for Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
     fn eq(&self, other: &Self) -> bool {
@@ -169,14 +169,14 @@ where
 
 impl<'p, K, T> Eq for Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
 }
 
 impl<'p, K, T> Hash for Subscription<'p, K, T>
 where
-    K: Id,
+    K: Id + StopCapturing,
     T: EventEntry<K>,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
