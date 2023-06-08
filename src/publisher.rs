@@ -21,12 +21,8 @@ pub trait Id:
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
 type Capturer<K, T> = Option<SyncSender<Event<K, T>>>;
 
-pub struct EvidentPublisher<
-    K,
-    T,
-    const CAPTURE_CHANNEL_BOUND: usize,
-    const SUBSCRIPTION_CHANNEL_BOUND: usize,
-> where
+pub struct EvidentPublisher<K, T>
+where
     K: Id,
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
@@ -34,17 +30,22 @@ pub struct EvidentPublisher<
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
     pub(crate) capturer: Arc<RwLock<Capturer<K, T>>>,
+    capture_channel_bound: usize,
+    subscription_channel_bound: usize,
 }
 
-impl<K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize>
-    EvidentPublisher<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<K, T> EvidentPublisher<K, T>
 where
     K: Id,
     T: EventEntry<K>,
     SyncSender<Event<K, T>>: Clone,
 {
-    pub fn new(mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static) -> Self {
-        let (send, recv) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
+    pub fn new(
+        mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        capture_channel_bound: usize,
+        subscription_channel_bound: usize,
+    ) -> Self {
+        let (send, recv) = mpsc::sync_channel(capture_channel_bound);
 
         thread::spawn(move || loop {
             match recv.recv() {
@@ -62,6 +63,8 @@ where
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: Arc::new(RwLock::new(Some(send))),
+            capture_channel_bound,
+            subscription_channel_bound,
         }
     }
 
@@ -87,26 +90,14 @@ where
         }
     }
 
-    pub fn subscribe(
-        &self,
-        id: K,
-    ) -> Result<
-        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
-        SubscriptionErr<K>,
-    > {
+    pub fn subscribe(&self, id: K) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
         self.subscribe_to_many(vec![id])
     }
 
-    pub fn subscribe_to_many(
-        &self,
-        ids: Vec<K>,
-    ) -> Result<
-        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
-        SubscriptionErr<K>,
-    > {
+    pub fn subscribe_to_many(&self, ids: Vec<K>) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
-        let (sender, receiver) = mpsc::sync_channel(ids.len() + SUBSCRIPTION_CHANNEL_BOUND);
+        let (sender, receiver) = mpsc::sync_channel(ids.len() + self.subscription_channel_bound);
         let channel_id = crate::uuid::Uuid::new_v4();
         let subscription_sender = SubscriptionSender { channel_id, sender };
 
@@ -139,13 +130,8 @@ where
         })
     }
 
-    pub fn subscribe_to_all_events(
-        &self,
-    ) -> Result<
-        Subscription<K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>,
-        SubscriptionErr<K>,
-    > {
-        let (sender, receiver) = mpsc::sync_channel(CAPTURE_CHANNEL_BOUND);
+    pub fn subscribe_to_all_events(&self) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
+        let (sender, receiver) = mpsc::sync_channel(self.capture_channel_bound);
         let channel_id = crate::uuid::Uuid::new_v4();
 
         match self.any_event.write().ok() {

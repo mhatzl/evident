@@ -9,13 +9,8 @@ use crate::{
     publisher::{EvidentPublisher, Id},
 };
 
-pub struct Subscription<
-    'p,
-    K,
-    T,
-    const CAPTURE_CHANNEL_BOUND: usize,
-    const SUBSCRIPTION_CHANNEL_BOUND: usize,
-> where
+pub struct Subscription<'p, K, T>
+where
     K: Id,
     T: EventEntry<K>,
 {
@@ -23,12 +18,10 @@ pub struct Subscription<
     pub(crate) receiver: Receiver<Event<K, T>>,
     pub(crate) sub_to_all: bool,
     pub(crate) subscriptions: Option<HashSet<K>>,
-    pub(crate) publisher:
-        &'p EvidentPublisher<K, T, { CAPTURE_CHANNEL_BOUND }, { SUBSCRIPTION_CHANNEL_BOUND }>,
+    pub(crate) publisher: &'p EvidentPublisher<K, T>,
 }
 
-impl<'p, K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize>
-    Subscription<'p, K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<'p, K, T> Subscription<'p, K, T>
 where
     K: Id,
     T: EventEntry<K>,
@@ -141,8 +134,7 @@ where
     }
 }
 
-impl<'p, K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize> Drop
-    for Subscription<'p, K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<'p, K, T> Drop for Subscription<'p, K, T>
 where
     K: Id,
     T: EventEntry<K>,
@@ -165,8 +157,7 @@ where
     }
 }
 
-impl<'p, K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize>
-    PartialEq for Subscription<'p, K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<'p, K, T> PartialEq for Subscription<'p, K, T>
 where
     K: Id,
     T: EventEntry<K>,
@@ -176,16 +167,14 @@ where
     }
 }
 
-impl<'p, K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize> Eq
-    for Subscription<'p, K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<'p, K, T> Eq for Subscription<'p, K, T>
 where
     K: Id,
     T: EventEntry<K>,
 {
 }
 
-impl<'p, K, T, const CAPTURE_CHANNEL_BOUND: usize, const SUBSCRIPTION_CHANNEL_BOUND: usize> Hash
-    for Subscription<'p, K, T, CAPTURE_CHANNEL_BOUND, SUBSCRIPTION_CHANNEL_BOUND>
+impl<'p, K, T> Hash for Subscription<'p, K, T>
 where
     K: Id,
     T: EventEntry<K>,

@@ -37,8 +37,8 @@ macro_rules! create_static_publisher {
         $id_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
-        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:literal,
-        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
+        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
+        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
         $crate::z__create_static_publisher!($publisher_name,
@@ -54,8 +54,8 @@ macro_rules! create_static_publisher {
         $id_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
-        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:literal,
-        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:literal,
+        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
+        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
         $crate::z__create_static_publisher!($publisher_name,
@@ -76,27 +76,20 @@ macro_rules! z__create_static_publisher {
         $id_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
-        $cap_channel_bound:literal,
-        $sub_channel_bound:literal,
+        $cap_channel_bound:expr,
+        $sub_channel_bound:expr,
         $try_capture:literal
         $(scope=$visibility:vis)?
     ) => {
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
-            $crate::publisher::EvidentPublisher<
-                $id_t,
-                $entry_t,
-                $cap_channel_bound,
-                $sub_channel_bound,
-            >,
+            $crate::publisher::EvidentPublisher<$id_t, $entry_t>,
         > = $crate::once_cell::sync::Lazy::new(|| {
             $crate::publisher::EvidentPublisher::<
                 $id_t,
                 $entry_t,
-                $cap_channel_bound,
-                $sub_channel_bound,
             >::new(|event| {
                 $publisher_name.on_event(event);
-            })
+            }, $cap_channel_bound, $sub_channel_bound)
         });
 
         impl Drop for $interm_event_t {
