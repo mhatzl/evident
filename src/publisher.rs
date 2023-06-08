@@ -63,6 +63,15 @@ where
     ) -> Self {
         let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
 
+        let publisher = EvidentPublisher {
+            subscriptions: Arc::new(RwLock::new(HashMap::new())),
+            any_event: Arc::new(RwLock::new(HashMap::new())),
+            capturer: Arc::new(RwLock::new(Some(send))),
+            capture_channel_bound,
+            subscription_channel_bound,
+        };
+        let capturer = publisher.capturer.clone();
+
         thread::spawn(move || {
             while let Ok(event) = recv.recv() {
                 let id = event.get_id().clone();
@@ -74,15 +83,13 @@ where
                     break;
                 }
             }
+
+            if let Ok(mut locked_cap) = capturer.write() {
+                *locked_cap = None;
+            }
         });
 
-        EvidentPublisher {
-            subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            any_event: Arc::new(RwLock::new(HashMap::new())),
-            capturer: Arc::new(RwLock::new(Some(send))),
-            capture_channel_bound,
-            subscription_channel_bound,
-        }
+        publisher
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
