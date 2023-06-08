@@ -24,7 +24,7 @@ pub trait StopCapturing {
     ///
     /// **Possible implementation:**
     ///
-    /// ```
+    /// ```ignore
     /// if id == &STOP_CAPTURING_ID {
     ///     return true;
     /// }
