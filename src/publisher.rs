@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
-        mpsc::{self, Receiver, SyncSender},
+        mpsc::{self, SyncSender},
         Arc, RwLock,
     },
     thread,
@@ -61,8 +61,7 @@ where
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
     ) -> Self {
-        let (send, recv): (SyncSender<Event<K, T>>, Receiver<Event<K, T>>) =
-            mpsc::sync_channel(capture_channel_bound);
+        let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
 
         thread::spawn(move || {
             while let Ok(event) = recv.recv() {
