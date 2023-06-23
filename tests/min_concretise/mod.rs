@@ -6,20 +6,20 @@ mod interim_event;
 
 evident::create_static_publisher!(
     PUBLISHER,
-    MinId,
-    MinEventEntry,
-    MinInterimEvent,
-    CAPTURE_CHANNEL_BOUND = 1,
-    SUBSCRIPTION_CHANNEL_BOUND = 1,
+    id_type = MinId,
+    entry_type = MinEventEntry,
+    interm_event_type = MinInterimEvent,
+    capture_channel_bound = 1,
+    subscription_channel_bound = 1,
     non_blocking = true
 );
 
 // Note: **no_export** to prevent the macro from adding `#[macro_export]`.
 evident::create_set_event_macro!(
-    no_export
-    MinId,
-    MinEventEntry,
-    MinInterimEvent
+    no_export,
+    id_type = MinId,
+    entry_type = MinEventEntry,
+    interm_event_type = MinInterimEvent
 );
 
 #[test]

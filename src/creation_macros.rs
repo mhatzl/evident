@@ -8,13 +8,13 @@
 /// ```ignore
 /// evident::create_static_publisher!(
 ///     <visibility specifier> <Name for the publisher>,
-///     <Struct implementing `evident::publisher::Id`>,
-///     <Struct implementing `evident::event::entry::EventEntry`>,
-///     <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
+///     id_type = <Struct implementing `evident::publisher::Id`>,
+///     entry_type = <Struct implementing `evident::event::entry::EventEntry`>,
+///     interm_event_type = <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
 ///     filter_type = <Optional Struct implementing `evident::event::filter::Filter`>,
 ///     filter = <Optional instance of the filter. Must be set if filter type is set>,
-///     CAPTURE_CHANNEL_BOUND = <`usize` literal for the channel bound used to capture events>,
-///     SUBSCRIPTION_CHANNEL_BOUND = <`usize` literal for the channel bound used per subscription>,
+///     capture_channel_bound = <`usize` literal for the channel bound used to capture events>,
+///     subscription_channel_bound = <`usize` literal for the channel bound used per subscription>,
 ///     non_blocking = <`bool` literal defining if event finalizing should be non-blocking (`true`), or block the thread (`false`)>
 /// );
 /// ```
@@ -24,11 +24,11 @@
 /// ```ignore
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
-///     MyId,
-///     MyEventEntry,
-///     MyIntermEvent,
-///     CAPTURE_CHANNEL_BOUND = 100,
-///     SUBSCRIPTION_CHANNEL_BOUND = 50,
+///     id_type = MyId,
+///     entry_type = MyEventEntry,
+///     interm_event_type = MyIntermEvent,
+///     capture_channel_bound = 100,
+///     subscription_channel_bound = 50,
 ///     non_blocking = true
 /// );
 /// ```
@@ -38,13 +38,13 @@
 /// ```ignore
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
-///     MyId,
-///     MyEventEntry,
-///     MyIntermEvent,
+///     id_type = MyId,
+///     entry_type = MyEventEntry,
+///     interm_event_type = MyIntermEvent,
 ///     filter_type = MyFilter,
 ///     filter = MyFilter::default(),
-///     CAPTURE_CHANNEL_BOUND = 100,
-///     SUBSCRIPTION_CHANNEL_BOUND = 50,
+///     capture_channel_bound = 100,
+///     subscription_channel_bound = 50,
 ///     non_blocking = true
 /// );
 /// ```
@@ -52,13 +52,13 @@
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
-        $id_t:ty,
-        $entry_t:ty,
-        $interm_event_t:ty,
+        id_type = $id_t:ty,
+        entry_type = $entry_t:ty,
+        interm_event_type = $interm_event_t:ty,
         $(filter_type=$filter_t:ty,)?
         $(filter=$filter:expr,)?
-        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
-        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
+        capture_channel_bound = $cap_channel_bound:expr,
+        subscription_channel_bound = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
         $crate::z__setup_static_publisher!(
@@ -74,13 +74,13 @@ macro_rules! create_static_publisher {
         );
     };
     ($visibility:vis $publisher_name:ident,
-        $id_t:ty,
-        $entry_t:ty,
-        $interm_event_t:ty,
+        id_type = $id_t:ty,
+        entry_type = $entry_t:ty,
+        interm_event_type = $interm_event_t:ty,
         $(filter_type=$filter_t:ty,)?
         $(filter=$filter:expr,)?
-        CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
-        SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
+        capture_channel_bound = $cap_channel_bound:expr,
+        subscription_channel_bound = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
         $crate::z__setup_static_publisher!(
@@ -221,15 +221,15 @@ macro_rules! z__create_static_publisher {
 /// ## Usage
 ///
 /// In the following example, text between `<>` is used as placeholder.
-/// `no_export` may be set at the beginning to prevent `#[macro_export]` from being added.
+/// `no_export,` may be set at the beginning to prevent `#[macro_export]` from being added.
 ///
-/// Note: Set fully qualified paths to make the macro accessible from anywhere.
+/// Note: Set fully qualified paths for the types to make the macro accessible from anywhere.
 ///
 /// ```ignore
 /// evident::create_set_event_macro!(
-///     <Struct implementing `evident::publisher::Id`>,
-///     <Struct implementing `evident::event::EventEntry`>,
-///     <Struct implementing `evident::event::IntermediaryEvent`>
+///     id_type = <Struct implementing `evident::publisher::Id`>,
+///     entry_type = <Struct implementing `evident::event::EventEntry`>,
+///     interm_event_type = <Struct implementing `evident::event::IntermediaryEvent`>
 /// );
 /// ```
 ///
@@ -237,17 +237,27 @@ macro_rules! z__create_static_publisher {
 ///
 /// ```ignore
 /// evident::create_set_event_macro!(
-///     my_crate::my_mod::MyId,
-///     my_crate::my_mod::MyEventEntry,
-///     my_crate::my_mod::MyInterimEvent
+///     id_type = my_crate::my_mod::MyId,
+///     entry_type = my_crate::my_mod::MyEventEntry,
+///     interm_event_type = my_crate::my_mod::MyInterimEvent
 /// );
 /// ```
-///     
+///
+/// **Example with no export:**
+///
+/// ```ignore
+/// evident::create_set_event_macro!(
+///     no_export,
+///     id_type = my_crate::my_mod::MyId,
+///     entry_type = my_crate::my_mod::MyEventEntry,
+///     interm_event_type = my_crate::my_mod::MyInterimEvent
+/// );
+/// ```
 #[macro_export]
 macro_rules! create_set_event_macro {
-    ($id_t:ty,
-        $entry_t:ty,
-        $interm_event_t:ty
+    (id_type = $id_t:ty,
+        entry_type = $entry_t:ty,
+        interm_event_type = $interm_event_t:ty
     ) => {
         #[macro_export]
         macro_rules! set_event {
@@ -266,10 +276,10 @@ macro_rules! create_set_event_macro {
             };
         }
     };
-    (no_export
-        $id_t:ty,
-        $entry_t:ty,
-        $interm_event_t:ty
+    (no_export,
+        id_type = $id_t:ty,
+        entry_type = $entry_t:ty,
+        interm_event_type = $interm_event_t:ty
     ) => {
         macro_rules! set_event {
             ($id:expr) => {

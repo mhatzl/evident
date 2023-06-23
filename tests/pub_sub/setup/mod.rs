@@ -6,17 +6,17 @@ pub mod interim_event;
 
 evident::create_static_publisher!(
     pub TESTS_PUBLISHER,
-    MinId,
-    MinEventEntry,
-    MinInterimEvent,
-    CAPTURE_CHANNEL_BOUND = 500,
-    SUBSCRIPTION_CHANNEL_BOUND = 500,
+    id_type = MinId,
+    entry_type = MinEventEntry,
+    interm_event_type = MinInterimEvent,
+    capture_channel_bound = 500,
+    subscription_channel_bound = 500,
     non_blocking = true
 );
 
 evident::create_set_event_macro!(
-    no_export
-    crate::pub_sub::setup::id::MinId,
-    crate::pub_sub::setup::entry::MinEventEntry,
-    crate::pub_sub::setup::interim_event::MinInterimEvent
+    no_export,
+    id_type = crate::pub_sub::setup::id::MinId,
+    entry_type = crate::pub_sub::setup::entry::MinEventEntry,
+    interm_event_type = crate::pub_sub::setup::interim_event::MinInterimEvent
 );
