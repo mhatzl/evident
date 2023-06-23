@@ -5,26 +5,28 @@ use std::{
 };
 
 use crate::{
-    event::{entry::EventEntry, Event},
+    event::{entry::EventEntry, filter::Filter, Event},
     publisher::{EvidentPublisher, Id, StopCapturing},
 };
 
-pub struct Subscription<'p, K, T>
+pub struct Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
     pub(crate) channel_id: crate::uuid::Uuid,
     pub(crate) receiver: Receiver<Event<K, T>>,
     pub(crate) sub_to_all: bool,
     pub(crate) subscriptions: Option<HashSet<K>>,
-    pub(crate) publisher: &'p EvidentPublisher<K, T>,
+    pub(crate) publisher: &'p EvidentPublisher<K, T, F>,
 }
 
-impl<'p, K, T> Subscription<'p, K, T>
+impl<'p, K, T, F> Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
     pub fn get_receiver(&self) -> &Receiver<Event<K, T>> {
         &self.receiver
@@ -34,24 +36,24 @@ where
         drop(self)
     }
 
-    pub fn unsubscribe_id(&mut self, id: K) -> Result<(), SubscriptionErr<K>> {
+    pub fn unsubscribe_id(&mut self, id: K) -> Result<(), SubscriptionError<K>> {
         self.unsubscribe_many(vec![id])
     }
 
-    pub fn unsubscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionErr<K>> {
+    pub fn unsubscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionError<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
-            return Err(SubscriptionErr::AllEventsSubscriptionNotModifiable);
+            return Err(SubscriptionError::AllEventsSubscriptionNotModifiable);
         }
 
         let subs = self.subscriptions.as_mut().unwrap();
 
         if ids.len() >= subs.len() {
-            return Err(SubscriptionErr::UnsubscribeWouldDeleteSubscription);
+            return Err(SubscriptionError::UnsubscribeWouldDeleteSubscription);
         }
 
         for id in ids.clone() {
             if !subs.contains(&id) {
-                return Err(SubscriptionErr::IdNotSubscribed(id));
+                return Err(SubscriptionError::IdNotSubscribed(id));
             }
         }
 
@@ -66,30 +68,30 @@ where
 
                 Ok(())
             }
-            Err(_) => Err(SubscriptionErr::CouldNotAccessPublisher),
+            Err(_) => Err(SubscriptionError::CouldNotAccessPublisher),
         }
     }
 
-    pub fn subscribe_id(&mut self, id: K) -> Result<(), SubscriptionErr<K>> {
+    pub fn subscribe_id(&mut self, id: K) -> Result<(), SubscriptionError<K>> {
         self.subscribe_many(vec![id])
     }
 
-    pub fn subscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionErr<K>> {
+    pub fn subscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionError<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
-            return Err(SubscriptionErr::AllEventsSubscriptionNotModifiable);
+            return Err(SubscriptionError::AllEventsSubscriptionNotModifiable);
         }
 
         let subs = self.subscriptions.as_mut().unwrap();
 
         for id in ids.clone() {
             if subs.contains(&id) {
-                return Err(SubscriptionErr::IdAlreadySubscribed(id));
+                return Err(SubscriptionError::IdAlreadySubscribed(id));
             }
         }
         let any_sub_id = match subs.iter().next() {
             Some(id) => id,
             None => {
-                return Err(SubscriptionErr::NoSubscriptionChannelAvailable);
+                return Err(SubscriptionError::NoSubscriptionChannelAvailable);
             }
         };
 
@@ -98,15 +100,15 @@ where
                 Some(id_subs) => match id_subs.get(&self.channel_id) {
                     Some(sub_sender) => sub_sender.clone(),
                     None => {
-                        return Err(SubscriptionErr::NoSubscriptionChannelAvailable);
+                        return Err(SubscriptionError::NoSubscriptionChannelAvailable);
                     }
                 },
                 None => {
-                    return Err(SubscriptionErr::NoSubscriptionChannelAvailable);
+                    return Err(SubscriptionError::NoSubscriptionChannelAvailable);
                 }
             },
             Err(_) => {
-                return Err(SubscriptionErr::CouldNotAccessPublisher);
+                return Err(SubscriptionError::CouldNotAccessPublisher);
             }
         };
 
@@ -129,15 +131,16 @@ where
 
                 Ok(())
             }
-            Err(_) => Err(SubscriptionErr::CouldNotAccessPublisher),
+            Err(_) => Err(SubscriptionError::CouldNotAccessPublisher),
         }
     }
 }
 
-impl<'p, K, T> Drop for Subscription<'p, K, T>
+impl<'p, K, T, F> Drop for Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
     fn drop(&mut self) {
         // Note: We do not want to block the current thread for *unsubscribing*, since publisher also maintains dead channels.
@@ -157,27 +160,30 @@ where
     }
 }
 
-impl<'p, K, T> PartialEq for Subscription<'p, K, T>
+impl<'p, K, T, F> PartialEq for Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
     }
 }
 
-impl<'p, K, T> Eq for Subscription<'p, K, T>
+impl<'p, K, T, F> Eq for Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
 }
 
-impl<'p, K, T> Hash for Subscription<'p, K, T>
+impl<'p, K, T, F> Hash for Subscription<'p, K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);
@@ -185,7 +191,7 @@ where
 }
 
 #[derive(Debug, Clone)]
-pub enum SubscriptionErr<K: Id> {
+pub enum SubscriptionError<K: Id> {
     AllEventsSubscriptionNotModifiable,
     IdNotSubscribed(K),
     IdAlreadySubscribed(K),

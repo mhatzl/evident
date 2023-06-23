@@ -9,8 +9,8 @@ use std::{
 };
 
 use crate::{
-    event::{entry::EventEntry, intermediary::IntermediaryEvent, Event},
-    subscription::{Subscription, SubscriptionErr, SubscriptionSender},
+    event::{entry::EventEntry, filter::Filter, intermediary::IntermediaryEvent, Event},
+    subscription::{Subscription, SubscriptionError, SubscriptionSender},
 };
 
 pub trait Id:
@@ -37,23 +37,26 @@ pub trait StopCapturing {
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
 type Capturer<K, T> = Option<SyncSender<Event<K, T>>>;
 
-pub struct EvidentPublisher<K, T>
+pub struct EvidentPublisher<K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
     SyncSender<Event<K, T>>: Clone,
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
     pub(crate) capturer: Arc<RwLock<Capturer<K, T>>>,
+    filter: Option<F>,
     capture_channel_bound: usize,
     subscription_channel_bound: usize,
 }
 
-impl<K, T> EvidentPublisher<K, T>
+impl<K, T, F> EvidentPublisher<K, T, F>
 where
     K: Id + StopCapturing,
     T: EventEntry<K>,
+    F: Filter<K, T>,
     SyncSender<Event<K, T>>: Clone,
 {
     pub fn new(
@@ -67,6 +70,7 @@ where
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: Arc::new(RwLock::new(Some(send))),
+            filter: None,
             capture_channel_bound,
             subscription_channel_bound,
         };
@@ -92,8 +96,56 @@ where
         publisher
     }
 
+    pub fn with(
+        mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        filter: F,
+        capture_channel_bound: usize,
+        subscription_channel_bound: usize,
+    ) -> Self {
+        let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
+
+        let publisher = EvidentPublisher {
+            subscriptions: Arc::new(RwLock::new(HashMap::new())),
+            any_event: Arc::new(RwLock::new(HashMap::new())),
+            capturer: Arc::new(RwLock::new(Some(send))),
+            filter: Some(filter),
+            capture_channel_bound,
+            subscription_channel_bound,
+        };
+        let capturer = publisher.capturer.clone();
+
+        thread::spawn(move || {
+            while let Ok(event) = recv.recv() {
+                let id = event.get_id().clone();
+
+                on_event(event);
+
+                // Note: `on_event` must still be called to notify all listeners to stop aswell
+                if StopCapturing::stop_capturing(&id) {
+                    break;
+                }
+            }
+
+            if let Ok(mut locked_cap) = capturer.write() {
+                *locked_cap = None;
+            }
+        });
+
+        publisher
+    }
+
+    pub fn get_filter(&self) -> &Option<F> {
+        &self.filter
+    }
+
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if let Ok(locked_cap) = self.capturer.try_read() {
+        if let Some(filter) = &self.filter {
+            if !filter.allow_event(interm_event) {
+                return;
+            }
+        }
+
+        if let Ok(locked_cap) = self.capturer.read() {
             if locked_cap.is_some() {
                 let _ = locked_cap
                     .as_ref()
@@ -104,6 +156,12 @@ where
     }
 
     pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
+        if let Some(filter) = &self.filter {
+            if !filter.allow_event(interm_event) {
+                return;
+            }
+        }
+
         if let Ok(locked_cap) = self.capturer.try_read() {
             if locked_cap.is_some() {
                 let _ = locked_cap
@@ -114,11 +172,14 @@ where
         }
     }
 
-    pub fn subscribe(&self, id: K) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
+    pub fn subscribe(&self, id: K) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
         self.subscribe_to_many(vec![id])
     }
 
-    pub fn subscribe_to_many(&self, ids: Vec<K>) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
+    pub fn subscribe_to_many(
+        &self,
+        ids: Vec<K>,
+    ) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + self.subscription_channel_bound);
@@ -141,7 +202,7 @@ where
                 }
             }
             None => {
-                return Err(SubscriptionErr::CouldNotAccessPublisher);
+                return Err(SubscriptionError::CouldNotAccessPublisher);
             }
         }
 
@@ -154,7 +215,7 @@ where
         })
     }
 
-    pub fn subscribe_to_all_events(&self) -> Result<Subscription<K, T>, SubscriptionErr<K>> {
+    pub fn subscribe_to_all_events(&self) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
         let (sender, receiver) = mpsc::sync_channel(self.capture_channel_bound);
         let channel_id = crate::uuid::Uuid::new_v4();
 
@@ -163,7 +224,7 @@ where
                 locked_vec.insert(channel_id, SubscriptionSender { channel_id, sender });
             }
             None => {
-                return Err(SubscriptionErr::CouldNotAccessPublisher);
+                return Err(SubscriptionError::CouldNotAccessPublisher);
             }
         }
 

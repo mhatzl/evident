@@ -5,6 +5,7 @@ use crate::publisher::Id;
 use self::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 
 pub mod entry;
+pub mod filter;
 pub mod intermediary;
 pub mod origin;
 

@@ -7,10 +7,12 @@
 ///
 /// ```ignore
 /// evident::create_static_publisher!(
-///     pub <Name for the publisher>,
+///     <visibility specifier> <Name for the publisher>,
 ///     <Struct implementing `evident::publisher::Id`>,
-///     <Struct implementing `evident::event::EventEntry`>,
-///     <Struct implementing `evident::event::IntermediaryEvent`>,
+///     <Struct implementing `evident::event::entry::EventEntry`>,
+///     <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
+///     filter_type = <Optional Struct implementing `evident::event::filter::Filter`>,
+///     filter = <Optional instance of the filter. Must be set if filter type is set>,
 ///     CAPTURE_CHANNEL_BOUND = <`usize` literal for the channel bound used to capture events>,
 ///     SUBSCRIPTION_CHANNEL_BOUND = <`usize` literal for the channel bound used per subscription>,
 ///     non_blocking = <`bool` literal defining if event finalizing should be non-blocking (`true`), or block the thread (`false`)>
@@ -31,47 +33,73 @@
 /// );
 /// ```
 ///
+/// **Example with filter:**
+///
+/// ```ignore
+/// evident::create_static_publisher!(
+///     pub MY_PUBLISHER,
+///     MyId,
+///     MyEventEntry,
+///     MyIntermEvent,
+///     filter_type = MyFilter,
+///     filter = MyFilter::default(),
+///     CAPTURE_CHANNEL_BOUND = 100,
+///     SUBSCRIPTION_CHANNEL_BOUND = 50,
+///     non_blocking = true
+/// );
+/// ```
+///
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
+        $(filter_type=$filter_t:ty,)?
+        $(filter=$filter:expr,)?
         CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
-        $crate::z__create_static_publisher!($publisher_name,
+        $crate::z__setup_static_publisher!(
+            $publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
             $cap_channel_bound,
             $sub_channel_bound,
             $try_capture
+            $(, filter_type=$filter_t)?
+            $(, filter=$filter)?
         );
     };
     ($visibility:vis $publisher_name:ident,
         $id_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
+        $(filter_type=$filter_t:ty,)?
+        $(filter=$filter:expr,)?
         CAPTURE_CHANNEL_BOUND = $cap_channel_bound:expr,
         SUBSCRIPTION_CHANNEL_BOUND = $sub_channel_bound:expr,
         non_blocking = $try_capture:literal
     ) => {
-        $crate::z__create_static_publisher!($publisher_name,
+        $crate::z__setup_static_publisher!(
+            $publisher_name,
             $id_t,
             $entry_t,
             $interm_event_t,
             $cap_channel_bound,
             $sub_channel_bound,
-            $try_capture
-            scope=$visibility
+            $try_capture,
+            scope = $visibility
+            $(, filter_type=$filter_t)?
+            $(, filter=$filter)?
         );
     };
 }
 
 #[macro_export]
-macro_rules! z__create_static_publisher {
+macro_rules! z__setup_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
         $entry_t:ty,
@@ -79,18 +107,23 @@ macro_rules! z__create_static_publisher {
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
         $try_capture:literal
-        $(scope=$visibility:vis)?
+        $(, scope=$visibility:vis)?
+        $(, filter_type=$filter_t:ty)?
+        $(, filter=$filter:expr)?
     ) => {
-        $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
-            $crate::publisher::EvidentPublisher<$id_t, $entry_t>,
-        > = $crate::once_cell::sync::Lazy::new(|| {
-            $crate::publisher::EvidentPublisher::<
-                $id_t,
-                $entry_t,
-            >::new(|event| {
-                $publisher_name.on_event(event);
-            }, $cap_channel_bound, $sub_channel_bound)
-        });
+
+        $crate::z__create_static_publisher!(
+            $publisher_name,
+            $id_t,
+            $entry_t,
+            $interm_event_t,
+            $(filter_type=$filter_t,)?
+            $(filter=$filter,)?
+            $cap_channel_bound,
+            $sub_channel_bound,
+            $try_capture
+            $(, scope=$visibility)?
+        );
 
         impl Drop for $interm_event_t {
             fn drop(&mut self) {
@@ -131,6 +164,56 @@ macro_rules! z__create_static_publisher {
             }
         }
     };
+}
+
+#[macro_export]
+macro_rules! z__create_static_publisher {
+    ($publisher_name:ident,
+        $id_t:ty,
+        $entry_t:ty,
+        $interm_event_t:ty,
+        filter_type=$filter_t:ty,
+        filter=$filter:expr,
+        $cap_channel_bound:expr,
+        $sub_channel_bound:expr,
+        $try_capture:literal
+        $(, scope=$visibility:vis)?
+    ) => {
+        $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
+            $crate::publisher::EvidentPublisher<$id_t, $entry_t, $filter_t>,
+        > = $crate::once_cell::sync::Lazy::new(|| {
+            $crate::publisher::EvidentPublisher::<
+                $id_t,
+                $entry_t,
+                $filter_t
+            >::with(|event| {
+                $publisher_name.on_event(event);
+            }, $filter, $cap_channel_bound, $sub_channel_bound)
+        });
+    };
+    ($publisher_name:ident,
+        $id_t:ty,
+        $entry_t:ty,
+        $interm_event_t:ty,
+        $cap_channel_bound:expr,
+        $sub_channel_bound:expr,
+        $try_capture:literal
+        $(, scope=$visibility:vis)?
+    ) => {
+        type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $entry_t>;
+
+        $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
+            $crate::publisher::EvidentPublisher<$id_t, $entry_t, DummyFilter>,
+        > = $crate::once_cell::sync::Lazy::new(|| {
+            $crate::publisher::EvidentPublisher::<
+                $id_t,
+                $entry_t,
+                DummyFilter
+            >::new(|event| {
+                $publisher_name.on_event(event);
+            }, $cap_channel_bound, $sub_channel_bound)
+        });
+    }
 }
 
 /// Macro to create the `set_event!()` macro for a concrete implementation.
