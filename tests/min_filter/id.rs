@@ -5,7 +5,9 @@ pub struct MinId {
 
 impl evident::publisher::Id for MinId {}
 
-const STOP_CAPTURING: MinId = MinId { id: 0 };
+// Note: `id: 1` is important, since filter would not allow an event with this id.
+// Test in `mod` ensures that stop capturing event is still captured.
+pub(super) const STOP_CAPTURING: MinId = MinId { id: 1 };
 
 impl evident::publisher::StopCapturing for MinId {
     fn stop_capturing(id: &Self) -> bool {

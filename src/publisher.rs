@@ -139,9 +139,11 @@ where
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if let Some(filter) = &self.filter {
-            if !filter.allow_event(interm_event) {
-                return;
+        if !StopCapturing::stop_capturing(interm_event.get_event_id()) {
+            if let Some(filter) = &self.filter {
+                if !filter.allow_event(interm_event) {
+                    return;
+                }
             }
         }
 
@@ -156,9 +158,11 @@ where
     }
 
     pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if let Some(filter) = &self.filter {
-            if !filter.allow_event(interm_event) {
-                return;
+        if !StopCapturing::stop_capturing(interm_event.get_event_id()) {
+            if let Some(filter) = &self.filter {
+                if !filter.allow_event(interm_event) {
+                    return;
+                }
             }
         }
 

@@ -1,3 +1,5 @@
+use crate::min_filter::id::STOP_CAPTURING;
+
 use self::{entry::MinEventEntry, filter::MinFilter, id::MinId, interim_event::MinInterimEvent};
 
 mod entry;
@@ -47,4 +49,25 @@ fn setup_minimal_filtered_publisher() {
         .unwrap();
 
     assert_eq!(event.get_id(), &allowed_id, "Allowed Id was not captured.");
+}
+
+#[test]
+fn stop_capturing_event_not_filtered() {
+    let msg = "Some msg";
+
+    let sub = PUBLISHER.subscribe(STOP_CAPTURING).unwrap();
+
+    // Make sure event is captured, even though filter would not allow id
+    set_event!(STOP_CAPTURING, msg).finalize();
+
+    let event = sub
+        .get_receiver()
+        .recv_timeout(std::time::Duration::from_millis(100))
+        .unwrap();
+
+    assert_eq!(
+        event.get_id(),
+        &STOP_CAPTURING,
+        "Stop capturing event was filtered."
+    );
 }
