@@ -137,7 +137,7 @@ macro_rules! z__setup_static_publisher {
 
         // Note: Re-impl `finalize()` for better IntelliSense.
         impl $interm_event_t {
-            pub fn finalize(self) -> $crate::event::intermediary::FinalizedEvent<$id_t> {
+            pub fn finalize(self) -> $crate::event::finalized::FinalizedEvent<$id_t> {
                 $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(self)
             }
         }

@@ -1,6 +1,6 @@
 use crate::publisher::Id;
 
-use super::{entry::EventEntry, origin::Origin};
+use super::{entry::EventEntry, finalized::FinalizedEvent, origin::Origin};
 
 pub trait IntermediaryEvent<K, T>
 where
@@ -42,25 +42,5 @@ where
 
     fn into_event_id(self) -> K {
         self.finalize().into_event_id()
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct FinalizedEvent<K: Id> {
-    pub event_id: K,
-    pub entry_id: crate::uuid::Uuid,
-}
-
-impl<K: Id> FinalizedEvent<K> {
-    pub fn new(event_id: K, entry_id: crate::uuid::Uuid) -> Self {
-        FinalizedEvent { event_id, entry_id }
-    }
-
-    pub fn into_event_id(self) -> K {
-        self.event_id
-    }
-
-    pub fn get_entry_id(&self) -> &crate::uuid::Uuid {
-        &self.entry_id
     }
 }
