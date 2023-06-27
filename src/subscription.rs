@@ -6,12 +6,12 @@ use std::{
 
 use crate::{
     event::{entry::EventEntry, filter::Filter, Event},
-    publisher::{EvidentPublisher, Id, StopCapturing},
+    publisher::{CaptureControl, EvidentPublisher, Id},
 };
 
 pub struct Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
@@ -24,7 +24,7 @@ where
 
 impl<'p, K, T, F> Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
@@ -138,7 +138,7 @@ where
 
 impl<'p, K, T, F> Drop for Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
@@ -162,7 +162,7 @@ where
 
 impl<'p, K, T, F> PartialEq for Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
@@ -173,7 +173,7 @@ where
 
 impl<'p, K, T, F> Eq for Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
@@ -181,7 +181,7 @@ where
 
 impl<'p, K, T, F> Hash for Subscription<'p, K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
 {

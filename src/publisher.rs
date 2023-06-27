@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
+        atomic::{AtomicBool, Ordering},
         mpsc::{self, SyncSender},
         Arc, RwLock,
     },
@@ -11,6 +12,7 @@ use std::{
 use crate::{
     event::{entry::EventEntry, filter::Filter, intermediary::IntermediaryEvent, Event},
     subscription::{Subscription, SubscriptionError, SubscriptionSender},
+    this_origin,
 };
 
 pub trait Id:
@@ -18,28 +20,40 @@ pub trait Id:
 {
 }
 
-/// Trait to implement for [`Id`], to notify the publisher and all listeners to stop capturing events.
-pub trait StopCapturing {
+/// Trait to implement for [`Id`], to control the publisher and all listeners.
+pub trait CaptureControl {
+    fn start(id: &Self) -> bool;
+
+    fn start_id() -> Self;
+
     /// Returns `true` if the given [`Id`] is used to signal the end of event capturing.
     ///
     /// **Possible implementation:**
     ///
     /// ```ignore
-    /// if id == &STOP_CAPTURING_ID {
-    ///     return true;
-    /// }
-    ///
-    /// false
+    /// id == &STOP_CAPTURING_ID
     /// ```
-    fn stop_capturing(id: &Self) -> bool;
+    fn stop(id: &Self) -> bool;
+
+    fn stop_id() -> Self;
+}
+
+pub fn is_control_id(id: &impl CaptureControl) -> bool {
+    CaptureControl::stop(id) || CaptureControl::start(id)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaptureMode {
+    Blocking,
+    NonBlocking,
 }
 
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
-type Capturer<K, T> = Option<SyncSender<Event<K, T>>>;
+type Capturer<K, T> = SyncSender<Event<K, T>>;
 
 pub struct EvidentPublisher<K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
     SyncSender<Event<K, T>>: Clone,
@@ -48,90 +62,115 @@ where
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
     pub(crate) capturer: Arc<RwLock<Capturer<K, T>>>,
     filter: Option<F>,
+    capturing: Arc<AtomicBool>,
+    capture_blocking: Arc<AtomicBool>,
     capture_channel_bound: usize,
     subscription_channel_bound: usize,
 }
 
 impl<K, T, F> EvidentPublisher<K, T, F>
 where
-    K: Id + StopCapturing,
+    K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
     SyncSender<Event<K, T>>: Clone,
 {
-    pub fn new(
+    fn create(
         mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        filter: Option<F>,
+        capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
     ) -> Self {
         let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
 
-        let publisher = EvidentPublisher {
-            subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            any_event: Arc::new(RwLock::new(HashMap::new())),
-            capturer: Arc::new(RwLock::new(Some(send))),
-            filter: None,
-            capture_channel_bound,
-            subscription_channel_bound,
-        };
-        let capturer = publisher.capturer.clone();
+        let capturing = Arc::new(AtomicBool::new(true));
+        let moved_capturing = capturing.clone();
 
         thread::spawn(move || {
-            while let Ok(event) = recv.recv() {
-                let id = event.get_id().clone();
+            let mut channel_closed = false;
+            while !channel_closed {
+                // Note: Only options for inner loops to exit is either via capturing change, or due to closed channel.
+                channel_closed = true;
 
-                on_event(event);
+                if moved_capturing.load(Ordering::Acquire) {
+                    while let Ok(event) = recv.recv() {
+                        let id = event.get_id().clone();
 
-                // Note: `on_event` must still be called to notify all listeners to stop aswell
-                if StopCapturing::stop_capturing(&id) {
-                    break;
+                        on_event(event);
+
+                        // Note: `on_event` must be called before to notify all listeners to stop aswell
+                        if CaptureControl::stop(&id) {
+                            moved_capturing.store(false, Ordering::Release);
+                            // Note: Set to 'false' to indicate that loop did not exit due to closed channel.
+                            channel_closed = false;
+                            break;
+                        }
+                    }
+                } else {
+                    while let Ok(event) = recv.recv() {
+                        let id = event.get_id();
+
+                        if CaptureControl::start(id) {
+                            // Note: `on_event` must be called to notify all listeners to start aswell
+                            on_event(event);
+
+                            moved_capturing.store(true, Ordering::Release);
+                            // Note: Set to 'false' to indicate that loop did not exit due to closed channel.
+                            channel_closed = false;
+                            break;
+                        }
+                    }
                 }
-            }
-
-            if let Ok(mut locked_cap) = capturer.write() {
-                *locked_cap = None;
             }
         });
 
-        publisher
+        let mode = match capture_mode {
+            CaptureMode::Blocking => Arc::new(AtomicBool::new(true)),
+            CaptureMode::NonBlocking => Arc::new(AtomicBool::new(false)),
+        };
+
+        EvidentPublisher {
+            subscriptions: Arc::new(RwLock::new(HashMap::new())),
+            any_event: Arc::new(RwLock::new(HashMap::new())),
+            capturer: Arc::new(RwLock::new(send)),
+            filter,
+            capturing,
+            capture_blocking: mode,
+            capture_channel_bound,
+            subscription_channel_bound,
+        }
+    }
+
+    pub fn new(
+        on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        capture_mode: CaptureMode,
+        capture_channel_bound: usize,
+        subscription_channel_bound: usize,
+    ) -> Self {
+        Self::create(
+            on_event,
+            None,
+            capture_mode,
+            capture_channel_bound,
+            subscription_channel_bound,
+        )
     }
 
     pub fn with(
-        mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
         filter: F,
+        capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
     ) -> Self {
-        let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
-
-        let publisher = EvidentPublisher {
-            subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            any_event: Arc::new(RwLock::new(HashMap::new())),
-            capturer: Arc::new(RwLock::new(Some(send))),
-            filter: Some(filter),
+        Self::create(
+            on_event,
+            Some(filter),
+            capture_mode,
             capture_channel_bound,
             subscription_channel_bound,
-        };
-        let capturer = publisher.capturer.clone();
-
-        thread::spawn(move || {
-            while let Ok(event) = recv.recv() {
-                let id = event.get_id().clone();
-
-                on_event(event);
-
-                // Note: `on_event` must still be called to notify all listeners to stop aswell
-                if StopCapturing::stop_capturing(&id) {
-                    break;
-                }
-            }
-
-            if let Ok(mut locked_cap) = capturer.write() {
-                *locked_cap = None;
-            }
-        });
-
-        publisher
+        )
     }
 
     pub fn get_filter(&self) -> &Option<F> {
@@ -139,7 +178,11 @@ where
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if !StopCapturing::stop_capturing(interm_event.get_event_id()) {
+        if !is_control_id(interm_event.get_event_id()) {
+            if !self.capturing.load(Ordering::Acquire) {
+                return;
+            }
+
             if let Some(filter) = &self.filter {
                 if !filter.allow_event(interm_event) {
                     return;
@@ -147,32 +190,27 @@ where
             }
         }
 
-        if let Ok(locked_cap) = self.capturer.read() {
-            if locked_cap.is_some() {
-                let _ = locked_cap
-                    .as_ref()
-                    .unwrap()
-                    .send(Event::new(interm_event.take_entry()));
+        if self.capture_blocking.load(Ordering::Acquire) {
+            if let Ok(locked_cap) = self.capturer.read() {
+                let _ = locked_cap.send(Event::new(interm_event.take_entry()));
             }
+        } else if let Ok(locked_cap) = self.capturer.try_read() {
+            let _ = locked_cap.try_send(Event::new(interm_event.take_entry()));
         }
     }
 
-    pub fn try_capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if !StopCapturing::stop_capturing(interm_event.get_event_id()) {
-            if let Some(filter) = &self.filter {
-                if !filter.allow_event(interm_event) {
-                    return;
-                }
-            }
+    pub fn get_capture_mode(&self) -> CaptureMode {
+        if self.capture_blocking.load(Ordering::Acquire) {
+            CaptureMode::Blocking
+        } else {
+            CaptureMode::NonBlocking
         }
+    }
 
-        if let Ok(locked_cap) = self.capturer.try_read() {
-            if locked_cap.is_some() {
-                let _ = locked_cap
-                    .as_ref()
-                    .unwrap()
-                    .try_send(Event::new(interm_event.take_entry()));
-            }
+    pub fn set_capture_mode(&self, mode: CaptureMode) {
+        match mode {
+            CaptureMode::Blocking => self.capture_blocking.store(true, Ordering::Release),
+            CaptureMode::NonBlocking => self.capture_blocking.store(false, Ordering::Release),
         }
     }
 
@@ -241,17 +279,31 @@ where
         })
     }
 
-    pub fn shutdown(&self) {
-        if let Ok(mut locked_subscriptions) = self.subscriptions.write() {
-            locked_subscriptions.drain();
-        }
+    pub fn is_capturing(&self) -> bool {
+        self.capturing.load(Ordering::Acquire)
+    }
 
-        if let Ok(mut locked_vec) = self.any_event.write() {
-            locked_vec.drain();
-        }
+    pub fn start_capturing(&self) {
+        let start_event = Event::new(EventEntry::new(
+            K::start_id(),
+            "Starting global capturing.",
+            this_origin!(),
+        ));
 
-        if let Ok(mut locked_cap) = self.capturer.write() {
-            *locked_cap = None;
+        if let Ok(locked_cap) = self.capturer.read() {
+            let _ = locked_cap.send(start_event);
+        }
+    }
+
+    pub fn stop_capturing(&self) {
+        let stop_event = Event::new(EventEntry::new(
+            K::stop_id(),
+            "Stopping global capturing.",
+            this_origin!(),
+        ));
+
+        if let Ok(locked_cap) = self.capturer.read() {
+            let _ = locked_cap.send(stop_event);
         }
     }
 

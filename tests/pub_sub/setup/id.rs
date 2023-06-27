@@ -11,14 +11,23 @@ impl std::fmt::Display for MinId {
     }
 }
 
-const STOP_CAPTURING: MinId = MinId { id: 0 };
+const START_CAPTURING: MinId = MinId { id: -1 };
+const STOP_CAPTURING: MinId = MinId { id: -2 };
 
-impl evident::publisher::StopCapturing for MinId {
-    fn stop_capturing(id: &Self) -> bool {
-        if id == &STOP_CAPTURING {
-            return true;
-        }
+impl evident::publisher::CaptureControl for MinId {
+    fn start(id: &Self) -> bool {
+        id == &START_CAPTURING
+    }
 
-        false
+    fn start_id() -> Self {
+        START_CAPTURING
+    }
+
+    fn stop(id: &Self) -> bool {
+        id == &STOP_CAPTURING
+    }
+
+    fn stop_id() -> Self {
+        STOP_CAPTURING
     }
 }

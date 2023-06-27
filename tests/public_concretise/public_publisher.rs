@@ -1,3 +1,5 @@
+use evident::publisher::CaptureMode;
+
 use crate::public_concretise::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
 // Note: **pub** visibility modifier before the name of the publisher.
@@ -9,7 +11,7 @@ evident::create_static_publisher!(
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
-    non_blocking = false
+    capture_mode = CaptureMode::Blocking
 );
 
 // Note: Fully qualified path to access the generated `set_event!()` macro from anywhere.

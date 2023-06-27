@@ -1,3 +1,5 @@
+use evident::publisher::CaptureMode;
+
 use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
 pub mod entry;
@@ -11,7 +13,7 @@ evident::create_static_publisher!(
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 500,
     subscription_channel_bound = 500,
-    non_blocking = true
+    capture_mode = CaptureMode::Blocking
 );
 
 evident::create_set_event_macro!(

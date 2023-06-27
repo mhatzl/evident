@@ -1,3 +1,5 @@
+use evident::publisher::CaptureMode;
+
 use crate::min_filter::id::STOP_CAPTURING;
 
 use self::{entry::MinEventEntry, filter::MinFilter, id::MinId, interim_event::MinInterimEvent};
@@ -16,7 +18,7 @@ evident::create_static_publisher!(
     filter = MinFilter::default(),
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
-    non_blocking = true
+    capture_mode = CaptureMode::Blocking
 );
 
 // Note: **no_export** to prevent the macro from adding `#[macro_export]`.

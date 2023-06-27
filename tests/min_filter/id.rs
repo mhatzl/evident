@@ -9,12 +9,22 @@ impl evident::publisher::Id for MinId {}
 // Test in `mod` ensures that stop capturing event is still captured.
 pub(super) const STOP_CAPTURING: MinId = MinId { id: 1 };
 
-impl evident::publisher::StopCapturing for MinId {
-    fn stop_capturing(id: &Self) -> bool {
-        if id == &STOP_CAPTURING {
-            return true;
-        }
+const START_CAPTURING: MinId = MinId { id: -1 };
 
-        false
+impl evident::publisher::CaptureControl for MinId {
+    fn start(id: &Self) -> bool {
+        id == &START_CAPTURING
+    }
+
+    fn start_id() -> Self {
+        START_CAPTURING
+    }
+
+    fn stop(id: &Self) -> bool {
+        id == &STOP_CAPTURING
+    }
+
+    fn stop_id() -> Self {
+        STOP_CAPTURING
     }
 }

@@ -15,7 +15,7 @@
 ///     filter = <Optional instance of the filter. Must be set if filter type is set>,
 ///     capture_channel_bound = <`usize` literal for the channel bound used to capture events>,
 ///     subscription_channel_bound = <`usize` literal for the channel bound used per subscription>,
-///     non_blocking = <`bool` literal defining if event finalizing should be non-blocking (`true`), or block the thread (`false`)>
+///     capture_mode = <`evident::publisher::CaptureMode` defining if event finalizing should be non-blocking (`CaptureMode::NonBlocking`), or block the thread (`CaptureMode::Blocking`)>
 /// );
 /// ```
 ///
@@ -29,7 +29,7 @@
 ///     interm_event_type = MyIntermEvent,
 ///     capture_channel_bound = 100,
 ///     subscription_channel_bound = 50,
-///     non_blocking = true
+///     capture_mode = CaptureMode::Blocking
 /// );
 /// ```
 ///
@@ -45,7 +45,7 @@
 ///     filter = MyFilter::default(),
 ///     capture_channel_bound = 100,
 ///     subscription_channel_bound = 50,
-///     non_blocking = true
+///     capture_mode = CaptureMode::NonBlocking
 /// );
 /// ```
 ///
@@ -59,7 +59,7 @@ macro_rules! create_static_publisher {
         $(filter=$filter:expr,)?
         capture_channel_bound = $cap_channel_bound:expr,
         subscription_channel_bound = $sub_channel_bound:expr,
-        non_blocking = $try_capture:literal
+        capture_mode = $capture_mode:expr
     ) => {
         $crate::z__setup_static_publisher!(
             $publisher_name,
@@ -68,7 +68,7 @@ macro_rules! create_static_publisher {
             $interm_event_t,
             $cap_channel_bound,
             $sub_channel_bound,
-            $try_capture
+            $capture_mode
             $(, filter_type=$filter_t)?
             $(, filter=$filter)?
         );
@@ -81,7 +81,7 @@ macro_rules! create_static_publisher {
         $(filter=$filter:expr,)?
         capture_channel_bound = $cap_channel_bound:expr,
         subscription_channel_bound = $sub_channel_bound:expr,
-        non_blocking = $try_capture:literal
+        capture_mode = $capture_mode:expr
     ) => {
         $crate::z__setup_static_publisher!(
             $publisher_name,
@@ -90,7 +90,7 @@ macro_rules! create_static_publisher {
             $interm_event_t,
             $cap_channel_bound,
             $sub_channel_bound,
-            $try_capture,
+            $capture_mode,
             scope = $visibility
             $(, filter_type=$filter_t)?
             $(, filter=$filter)?
@@ -106,7 +106,7 @@ macro_rules! z__setup_static_publisher {
         $interm_event_t:ty,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $try_capture:literal
+        $capture_mode:expr
         $(, scope=$visibility:vis)?
         $(, filter_type=$filter_t:ty)?
         $(, filter=$filter:expr)?
@@ -121,17 +121,13 @@ macro_rules! z__setup_static_publisher {
             $(filter=$filter,)?
             $cap_channel_bound,
             $sub_channel_bound,
-            $try_capture
+            $capture_mode
             $(, scope=$visibility)?
         );
 
         impl Drop for $interm_event_t {
             fn drop(&mut self) {
-                if $try_capture {
-                    $publisher_name.try_capture(self);
-                } else {
-                    $publisher_name.capture(self);
-                }
+                $publisher_name.capture(self);
             }
         }
 
@@ -176,7 +172,7 @@ macro_rules! z__create_static_publisher {
         filter=$filter:expr,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $try_capture:literal
+        $capture_mode:expr
         $(, scope=$visibility:vis)?
     ) => {
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
@@ -188,7 +184,7 @@ macro_rules! z__create_static_publisher {
                 $filter_t
             >::with(|event| {
                 $publisher_name.on_event(event);
-            }, $filter, $cap_channel_bound, $sub_channel_bound)
+            }, $filter, $capture_mode, $cap_channel_bound, $sub_channel_bound)
         });
     };
     ($publisher_name:ident,
@@ -197,7 +193,7 @@ macro_rules! z__create_static_publisher {
         $interm_event_t:ty,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $try_capture:literal
+        $capture_mode:expr
         $(, scope=$visibility:vis)?
     ) => {
         type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $entry_t>;
@@ -211,7 +207,7 @@ macro_rules! z__create_static_publisher {
                 DummyFilter
             >::new(|event| {
                 $publisher_name.on_event(event);
-            }, $cap_channel_bound, $sub_channel_bound)
+            }, $capture_mode, $cap_channel_bound, $sub_channel_bound)
         });
     }
 }
