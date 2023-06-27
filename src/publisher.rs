@@ -60,7 +60,7 @@ where
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
-    pub(crate) capturer: Arc<RwLock<Capturer<K, T>>>,
+    pub(crate) capturer: Capturer<K, T>,
     filter: Option<F>,
     capturing: Arc<AtomicBool>,
     capture_blocking: Arc<AtomicBool>,
@@ -133,7 +133,7 @@ where
         EvidentPublisher {
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             any_event: Arc::new(RwLock::new(HashMap::new())),
-            capturer: Arc::new(RwLock::new(send)),
+            capturer: send,
             filter,
             capturing,
             capture_blocking: mode,
@@ -191,11 +191,11 @@ where
         }
 
         if self.capture_blocking.load(Ordering::Acquire) {
-            if let Ok(locked_cap) = self.capturer.read() {
-                let _ = locked_cap.send(Event::new(interm_event.take_entry()));
-            }
-        } else if let Ok(locked_cap) = self.capturer.try_read() {
-            let _ = locked_cap.try_send(Event::new(interm_event.take_entry()));
+            let _ = self.capturer.send(Event::new(interm_event.take_entry()));
+        } else {
+            let _ = self
+                .capturer
+                .try_send(Event::new(interm_event.take_entry()));
         }
     }
 
@@ -290,9 +290,7 @@ where
             this_origin!(),
         ));
 
-        if let Ok(locked_cap) = self.capturer.read() {
-            let _ = locked_cap.send(start_event);
-        }
+        let _ = self.capturer.send(start_event);
     }
 
     pub fn stop_capturing(&self) {
@@ -302,9 +300,7 @@ where
             this_origin!(),
         ));
 
-        if let Ok(locked_cap) = self.capturer.read() {
-            let _ = locked_cap.send(stop_event);
-        }
+        let _ = self.capturer.send(stop_event);
     }
 
     pub fn on_event(&self, event: Event<K, T>) {
