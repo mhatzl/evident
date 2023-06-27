@@ -2,8 +2,8 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, SyncSender},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        mpsc::{self, SyncSender, TrySendError},
         Arc, RwLock,
     },
     thread,
@@ -66,6 +66,7 @@ where
     capture_blocking: Arc<AtomicBool>,
     capture_channel_bound: usize,
     subscription_channel_bound: usize,
+    missed_captures: Arc<AtomicUsize>,
 }
 
 impl<K, T, F> EvidentPublisher<K, T, F>
@@ -139,6 +140,7 @@ where
             capture_blocking: mode,
             capture_channel_bound,
             subscription_channel_bound,
+            missed_captures: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -193,9 +195,21 @@ where
         if self.capture_blocking.load(Ordering::Acquire) {
             let _ = self.capturer.send(Event::new(interm_event.take_entry()));
         } else {
-            let _ = self
+            let res = self
                 .capturer
                 .try_send(Event::new(interm_event.take_entry()));
+
+            if let Err(TrySendError::Full(_)) = res {
+                // Note: If another thread has missed captures at the same moment, the count may be inaccurate, because there is no lock.
+                // This should still be fine, since
+                // - highly unlikely to happen during production with reasonable channel bounds and number of logs captured
+                // - count is still increased, and any increase in missed captures is bad (+/- one or two is irrelevant)
+                let missed_captures = self.missed_captures.load(Ordering::Relaxed);
+                if missed_captures < usize::MAX {
+                    self.missed_captures
+                        .store(missed_captures + 1, Ordering::Relaxed);
+                }
+            }
         }
     }
 
@@ -212,6 +226,14 @@ where
             CaptureMode::Blocking => self.capture_blocking.store(true, Ordering::Release),
             CaptureMode::NonBlocking => self.capture_blocking.store(false, Ordering::Release),
         }
+    }
+
+    pub fn get_missed_captures(&self) -> usize {
+        self.missed_captures.load(Ordering::Relaxed)
+    }
+
+    pub fn reset_missed_captures(&self) {
+        self.missed_captures.store(0, Ordering::Relaxed);
     }
 
     pub fn subscribe(&self, id: K) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
