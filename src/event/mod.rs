@@ -55,7 +55,7 @@ where
 }
 
 impl<K: Id, T: EventEntry<K>> Event<K, T> {
-    pub(crate) fn new(entry: T) -> Self {
+    pub fn new(entry: T) -> Self {
         let curr_thread = std::thread::current();
 
         Event {
