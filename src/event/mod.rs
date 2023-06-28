@@ -51,7 +51,7 @@ where
     thread_id: std::thread::ThreadId,
     thread_name: Option<String>,
 
-    creation_dt_utc: crate::chrono::DateTime<crate::chrono::offset::Utc>,
+    pub(crate) captured_dt_utc: Option<crate::chrono::DateTime<crate::chrono::offset::Utc>>,
 }
 
 impl<K: Id, T: EventEntry<K>> Event<K, T> {
@@ -65,7 +65,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
             thread_id: curr_thread.id(),
             thread_name: curr_thread.name().map(|s| s.to_string()),
 
-            creation_dt_utc: chrono::Utc::now(),
+            captured_dt_utc: None,
         }
     }
 
@@ -100,8 +100,10 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         self.thread_name.as_deref()
     }
 
-    pub fn get_creation_datetime(&self) -> &crate::chrono::DateTime<crate::chrono::offset::Utc> {
-        &self.creation_dt_utc
+    pub fn get_captured_datetime(
+        &self,
+    ) -> &Option<crate::chrono::DateTime<crate::chrono::offset::Utc>> {
+        &self.captured_dt_utc
     }
 }
 

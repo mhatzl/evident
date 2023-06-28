@@ -333,8 +333,9 @@ fn datetime_of_second_event_is_greater() {
 
     assert_eq!(
         event_2
-            .get_creation_datetime()
-            .cmp(event_1.get_creation_datetime()),
+            .get_captured_datetime()
+            .unwrap()
+            .cmp(&event_1.get_captured_datetime().unwrap()),
         Ordering::Greater,
         "Datetime of second event is not greater than first event."
     );

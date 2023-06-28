@@ -93,8 +93,9 @@ where
                 channel_closed = true;
 
                 if moved_capturing.load(Ordering::Acquire) {
-                    while let Ok(event) = recv.recv() {
+                    while let Ok(mut event) = recv.recv() {
                         let id = event.get_id().clone();
+                        event.captured_dt_utc = Some(chrono::Utc::now());
 
                         on_event(event);
 
