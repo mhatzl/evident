@@ -56,7 +56,6 @@ where
     K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
-    SyncSender<Event<K, T>>: Clone,
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
@@ -74,7 +73,6 @@ where
     K: Id + CaptureControl,
     T: EventEntry<K>,
     F: Filter<K, T>,
-    SyncSender<Event<K, T>>: Clone,
 {
     fn create(
         mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
@@ -326,7 +324,8 @@ where
     }
 
     pub fn on_event(&self, event: Event<K, T>) {
-        let key = event.entry.get_event_id();
+        let arc_event = Arc::new(event);
+        let key = arc_event.entry.get_event_id();
 
         let mut bad_subs: Vec<crate::uuid::Uuid> = Vec::new();
         let mut bad_any_event: Vec<crate::uuid::Uuid> = Vec::new();
@@ -334,7 +333,7 @@ where
         if let Ok(locked_subscriptions) = self.subscriptions.read() {
             if let Some(sub_senders) = locked_subscriptions.get(key) {
                 for (channel_id, sub_sender) in sub_senders.iter() {
-                    if sub_sender.sender.send(event.clone()).is_err() {
+                    if sub_sender.sender.send(arc_event.clone()).is_err() {
                         bad_subs.push(*channel_id);
                     }
                 }
@@ -343,7 +342,7 @@ where
 
         if let Ok(locked_vec) = self.any_event.read() {
             for (channel_id, any_event_sender) in locked_vec.iter() {
-                if any_event_sender.sender.send(event.clone()).is_err() {
+                if any_event_sender.sender.send(arc_event.clone()).is_err() {
                     bad_any_event.push(*channel_id);
                 }
             }
