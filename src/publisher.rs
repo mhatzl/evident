@@ -360,7 +360,16 @@ where
         if let Ok(locked_subscriptions) = self.subscriptions.read() {
             if let Some(sub_senders) = locked_subscriptions.get(key) {
                 for (channel_id, sub_sender) in sub_senders.iter() {
-                    if sub_sender.sender.send(arc_event.clone()).is_err() {
+                    let bad_channel = if self.capture_blocking.load(Ordering::Acquire) {
+                        sub_sender.sender.send(arc_event.clone()).is_err()
+                    } else {
+                        matches!(
+                            sub_sender.sender.try_send(arc_event.clone()),
+                            Err(TrySendError::Disconnected(_))
+                        )
+                    };
+
+                    if bad_channel {
                         bad_subs.push(*channel_id);
                     }
                 }
@@ -369,7 +378,16 @@ where
 
         if let Ok(locked_vec) = self.any_event.read() {
             for (channel_id, any_event_sender) in locked_vec.iter() {
-                if any_event_sender.sender.send(arc_event.clone()).is_err() {
+                let bad_channel = if self.capture_blocking.load(Ordering::Acquire) {
+                    any_event_sender.sender.send(arc_event.clone()).is_err()
+                } else {
+                    matches!(
+                        any_event_sender.sender.try_send(arc_event.clone()),
+                        Err(TrySendError::Disconnected(_))
+                    )
+                };
+
+                if bad_channel {
                     bad_any_event.push(*channel_id);
                 }
             }
