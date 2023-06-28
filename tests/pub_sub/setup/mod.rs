@@ -1,4 +1,4 @@
-use evident::publisher::CaptureMode;
+use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
@@ -13,7 +13,8 @@ evident::create_static_publisher!(
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 500,
     subscription_channel_bound = 500,
-    capture_mode = CaptureMode::Blocking
+    capture_mode = CaptureMode::Blocking,
+    timestamp_kind = EventTimestampKind::Captured
 );
 
 evident::create_set_event_macro!(

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::publisher::{CaptureControl, Id};
 
-use super::{entry::EventEntry, intermediary::IntermediaryEvent};
+use super::{entry::EventEntry, Event};
 
 pub trait Filter<K, T>
 where
@@ -10,7 +10,7 @@ where
     T: EventEntry<K>,
 {
     /// Return `true` if the event should be captured.
-    fn allow_event(&self, event: &mut impl IntermediaryEvent<K, T>) -> bool;
+    fn allow_event(&self, event: &Event<K, T>) -> bool;
 }
 
 #[derive(Default, Debug)]
@@ -28,7 +28,7 @@ where
     K: Id + CaptureControl,
     T: EventEntry<K>,
 {
-    fn allow_event(&self, _event: &mut impl IntermediaryEvent<K, T>) -> bool {
+    fn allow_event(&self, _event: &Event<K, T>) -> bool {
         true
     }
 }

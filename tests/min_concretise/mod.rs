@@ -1,4 +1,4 @@
-use evident::publisher::CaptureMode;
+use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
@@ -13,7 +13,8 @@ evident::create_static_publisher!(
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
-    capture_mode = CaptureMode::Blocking
+    capture_mode = CaptureMode::Blocking,
+    timestamp_kind = EventTimestampKind::Created
 );
 
 // Note: **no_export** to prevent the macro from adding `#[macro_export]`.
@@ -38,5 +39,9 @@ fn setup_minimal_publisher() {
         .recv_timeout(std::time::Duration::from_millis(100))
         .unwrap();
 
-    assert_eq!(event.get_id(), &some_id, "Sent and received Ids differ.");
+    assert_eq!(
+        event.get_event_id(),
+        &some_id,
+        "Sent and received Ids differ."
+    );
 }

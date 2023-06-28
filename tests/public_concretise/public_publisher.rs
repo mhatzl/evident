@@ -1,4 +1,4 @@
-use evident::publisher::CaptureMode;
+use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use crate::public_concretise::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
 
@@ -11,7 +11,8 @@ evident::create_static_publisher!(
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
-    capture_mode = CaptureMode::Blocking
+    capture_mode = CaptureMode::Blocking,
+    timestamp_kind = EventTimestampKind::Captured
 );
 
 // Note: Fully qualified path to access the generated `set_event!()` macro from anywhere.

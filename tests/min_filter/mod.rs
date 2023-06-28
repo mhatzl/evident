@@ -1,4 +1,4 @@
-use evident::publisher::CaptureMode;
+use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use crate::min_filter::id::STOP_CAPTURING;
 
@@ -18,7 +18,8 @@ evident::create_static_publisher!(
     filter = MinFilter::default(),
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
-    capture_mode = CaptureMode::Blocking
+    capture_mode = CaptureMode::Blocking,
+    timestamp_kind = EventTimestampKind::Captured
 );
 
 // Note: **no_export** to prevent the macro from adding `#[macro_export]`.
@@ -50,7 +51,11 @@ fn setup_minimal_filtered_publisher() {
         .recv_timeout(std::time::Duration::from_millis(100))
         .unwrap();
 
-    assert_eq!(event.get_id(), &allowed_id, "Allowed Id was not captured.");
+    assert_eq!(
+        event.get_event_id(),
+        &allowed_id,
+        "Allowed Id was not captured."
+    );
 }
 
 #[test]
@@ -68,7 +73,7 @@ fn stop_capturing_event_not_filtered() {
         .unwrap();
 
     assert_eq!(
-        event.get_id(),
+        event.get_event_id(),
         &STOP_CAPTURING,
         "Stop capturing event was filtered."
     );

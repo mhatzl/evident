@@ -51,7 +51,7 @@ where
     thread_id: std::thread::ThreadId,
     thread_name: Option<String>,
 
-    pub(crate) captured_dt_utc: Option<crate::chrono::DateTime<crate::chrono::offset::Utc>>,
+    pub(crate) timestamp_dt_utc: Option<crate::chrono::DateTime<crate::chrono::offset::Utc>>,
 }
 
 impl<K: Id, T: EventEntry<K>> Event<K, T> {
@@ -65,12 +65,12 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
             thread_id: curr_thread.id(),
             thread_name: curr_thread.name().map(|s| s.to_string()),
 
-            captured_dt_utc: None,
+            timestamp_dt_utc: None,
         }
     }
 
     /// Returns the [`Id`] of this event
-    pub fn get_id(&self) -> &K {
+    pub fn get_event_id(&self) -> &K {
         self.entry.get_event_id()
     }
 
@@ -100,10 +100,9 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         self.thread_name.as_deref()
     }
 
-    pub fn get_captured_datetime(
-        &self,
-    ) -> &Option<crate::chrono::DateTime<crate::chrono::offset::Utc>> {
-        &self.captured_dt_utc
+    /// Get the timestamp of the event as UTC datetime.
+    pub fn get_timestamp(&self) -> &Option<crate::chrono::DateTime<crate::chrono::offset::Utc>> {
+        &self.timestamp_dt_utc
     }
 }
 

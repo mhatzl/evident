@@ -23,5 +23,9 @@ fn setup_minimal_public_publisher() {
         .recv_timeout(std::time::Duration::from_millis(100))
         .unwrap();
 
-    assert_eq!(event.get_id(), &some_id, "Sent and received Ids differ.");
+    assert_eq!(
+        event.get_event_id(),
+        &some_id,
+        "Sent and received Ids differ."
+    );
 }

@@ -21,7 +21,7 @@ fn set_event_has_correct_origin() {
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
 
-    assert_eq!(*event.get_id(), id, "Ids are not equal.");
+    assert_eq!(*event.get_event_id(), id, "Ids are not equal.");
     assert_eq!(
         event.get_origin().line_nr,
         line_nr,
@@ -77,14 +77,22 @@ fn set_same_event_twice_with_different_origin() {
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
 
-    assert_eq!(*event_1.get_id(), id, "Set and stored ids are not equal.");
+    assert_eq!(
+        *event_1.get_event_id(),
+        id,
+        "Set and stored ids are not equal."
+    );
     assert_eq!(
         event_1.get_origin().line_nr,
         line_1,
         "Set and stored line numbers are not equal."
     );
 
-    assert_eq!(*event_2.get_id(), id, "Set and stored ids are not equal.");
+    assert_eq!(
+        *event_2.get_event_id(),
+        id,
+        "Set and stored ids are not equal."
+    );
     assert_eq!(
         event_2.get_origin().line_nr,
         line_2,
@@ -92,8 +100,8 @@ fn set_same_event_twice_with_different_origin() {
     );
 
     assert_eq!(
-        *event_1.get_id(),
-        *event_2.get_id(),
+        *event_1.get_event_id(),
+        *event_2.get_event_id(),
         "Events do not have the same id."
     );
 }
@@ -128,14 +136,14 @@ fn set_same_event_twice_with_same_origin() {
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
 
-    assert_eq!(*event_1.get_id(), id, "Ids are not equal.");
+    assert_eq!(*event_1.get_event_id(), id, "Ids are not equal.");
     assert_eq!(
         event_1.get_origin().line_nr,
         line,
         "Line numbers are not equal."
     );
 
-    assert_eq!(*event_2.get_id(), id, "Ids are not equal.");
+    assert_eq!(*event_2.get_event_id(), id, "Ids are not equal.");
     assert_eq!(
         event_2.get_origin().line_nr,
         line,
@@ -271,7 +279,11 @@ fn set_event_with_enum() {
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
 
-    assert_eq!(*event.get_id(), TestLogId::Id.into(), "Ids are not equal");
+    assert_eq!(
+        *event.get_event_id(),
+        TestLogId::Id.into(),
+        "Ids are not equal"
+    );
 }
 
 #[test]
@@ -333,9 +345,9 @@ fn datetime_of_second_event_is_greater() {
 
     assert_eq!(
         event_2
-            .get_captured_datetime()
+            .get_timestamp()
             .unwrap()
-            .cmp(&event_1.get_captured_datetime().unwrap()),
+            .cmp(&event_1.get_timestamp().unwrap()),
         Ordering::Greater,
         "Datetime of second event is not greater than first event."
     );

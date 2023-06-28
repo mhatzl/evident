@@ -6,10 +6,7 @@ use super::{entry::MinEventEntry, id::MinId};
 pub struct MinFilter {}
 
 impl Filter<MinId, MinEventEntry> for MinFilter {
-    fn allow_event(
-        &self,
-        event: &mut impl evident::event::intermediary::IntermediaryEvent<MinId, MinEventEntry>,
-    ) -> bool {
+    fn allow_event(&self, event: &evident::event::Event<MinId, MinEventEntry>) -> bool {
         if event.get_event_id().id % 2 == 0 {
             return true;
         }

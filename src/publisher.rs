@@ -48,6 +48,20 @@ pub enum CaptureMode {
     NonBlocking,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EventTimestampKind {
+    /// Sets the event time, when the event is captured.
+    ///
+    /// **Note:** With this setting, event timestamps might show incorrect order in case of concurrent events, because events are buffered before capturing.
+    ///
+    /// **Note:** This has slightly better performance on the thread setting an event, because system time access is delayed to the capturing thread.
+    Captured,
+    /// Sets the event time, when the event is created.
+    ///
+    /// **Note:** This has slightly worse performance on the thread setting an event, because system time access most likely requires a context switch.
+    Created,
+}
+
 type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
 type Capturer<K, T> = SyncSender<Event<K, T>>;
 
@@ -66,6 +80,7 @@ where
     capture_channel_bound: usize,
     subscription_channel_bound: usize,
     missed_captures: Arc<AtomicUsize>,
+    timestamp_kind: EventTimestampKind,
 }
 
 impl<K, T, F> EvidentPublisher<K, T, F>
@@ -80,6 +95,7 @@ where
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
+        timestamp_kind: EventTimestampKind,
     ) -> Self {
         let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
 
@@ -94,8 +110,10 @@ where
 
                 if moved_capturing.load(Ordering::Acquire) {
                     while let Ok(mut event) = recv.recv() {
-                        let id = event.get_id().clone();
-                        event.captured_dt_utc = Some(chrono::Utc::now());
+                        let id = event.get_event_id().clone();
+                        if timestamp_kind == EventTimestampKind::Captured {
+                            event.timestamp_dt_utc = Some(chrono::Utc::now());
+                        }
 
                         on_event(event);
 
@@ -109,7 +127,7 @@ where
                     }
                 } else {
                     while let Ok(event) = recv.recv() {
-                        let id = event.get_id();
+                        let id = event.get_event_id();
 
                         if CaptureControl::start(id) {
                             // Note: `on_event` must be called to notify all listeners to start aswell
@@ -140,6 +158,7 @@ where
             capture_channel_bound,
             subscription_channel_bound,
             missed_captures: Arc::new(AtomicUsize::new(0)),
+            timestamp_kind,
         }
     }
 
@@ -148,6 +167,7 @@ where
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
+        time_stamp_kind: EventTimestampKind,
     ) -> Self {
         Self::create(
             on_event,
@@ -155,6 +175,7 @@ where
             capture_mode,
             capture_channel_bound,
             subscription_channel_bound,
+            time_stamp_kind,
         )
     }
 
@@ -164,6 +185,7 @@ where
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
+        timestamp_kind: EventTimestampKind,
     ) -> Self {
         Self::create(
             on_event,
@@ -171,6 +193,7 @@ where
             capture_mode,
             capture_channel_bound,
             subscription_channel_bound,
+            timestamp_kind,
         )
     }
 
@@ -179,24 +202,27 @@ where
     }
 
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        if !is_control_id(interm_event.get_event_id()) {
+        let mut event = Event::new(interm_event.take_entry());
+        if self.timestamp_kind == EventTimestampKind::Created {
+            event.timestamp_dt_utc = Some(chrono::Utc::now());
+        }
+
+        if !is_control_id(event.get_event_id()) {
             if !self.capturing.load(Ordering::Acquire) {
                 return;
             }
 
             if let Some(filter) = &self.filter {
-                if !filter.allow_event(interm_event) {
+                if !filter.allow_event(&event) {
                     return;
                 }
             }
         }
 
         if self.capture_blocking.load(Ordering::Acquire) {
-            let _ = self.capturer.send(Event::new(interm_event.take_entry()));
+            let _ = self.capturer.send(event);
         } else {
-            let res = self
-                .capturer
-                .try_send(Event::new(interm_event.take_entry()));
+            let res = self.capturer.try_send(event);
 
             if let Err(TrySendError::Full(_)) = res {
                 // Note: If another thread has missed captures at the same moment, the count may be inaccurate, because there is no lock.

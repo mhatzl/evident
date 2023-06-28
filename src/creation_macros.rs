@@ -15,11 +15,12 @@
 ///     filter = <Optional instance of the filter. Must be set if filter type is set>,
 ///     capture_channel_bound = <`usize` literal for the channel bound used to capture events>,
 ///     subscription_channel_bound = <`usize` literal for the channel bound used per subscription>,
-///     capture_mode = <`evident::publisher::CaptureMode` defining if event finalizing should be non-blocking (`CaptureMode::NonBlocking`), or block the thread (`CaptureMode::Blocking`)>
+///     capture_mode = <`evident::publisher::CaptureMode` defining if event finalizing should be non-blocking (`NonBlocking`), or block the thread (`Blocking`)>,
+///     timestamp_kind = <`evident::publisher::EventTimestampKind` defining if event timestamp should be set on creation (`Created`), or on capture (`Captured`)>
 /// );
 /// ```
 ///
-/// **Example with dummy implementations:**
+/// **Example without filter:**
 ///
 /// ```ignore
 /// evident::create_static_publisher!(
@@ -29,7 +30,8 @@
 ///     interm_event_type = MyIntermEvent,
 ///     capture_channel_bound = 100,
 ///     subscription_channel_bound = 50,
-///     capture_mode = CaptureMode::Blocking
+///     capture_mode = CaptureMode::Blocking,
+///     timestamp_kind = EventTimestampKind::Captured
 /// );
 /// ```
 ///
@@ -45,7 +47,8 @@
 ///     filter = MyFilter::default(),
 ///     capture_channel_bound = 100,
 ///     subscription_channel_bound = 50,
-///     capture_mode = CaptureMode::NonBlocking
+///     capture_mode = CaptureMode::NonBlocking,
+///     timestamp_kind = EventTimestampKind::Captured
 /// );
 /// ```
 ///
@@ -59,7 +62,8 @@ macro_rules! create_static_publisher {
         $(filter=$filter:expr,)?
         capture_channel_bound = $cap_channel_bound:expr,
         subscription_channel_bound = $sub_channel_bound:expr,
-        capture_mode = $capture_mode:expr
+        capture_mode = $capture_mode:expr,
+        timestamp_kind = $timestamp_kind:expr
     ) => {
         $crate::z__setup_static_publisher!(
             $publisher_name,
@@ -68,7 +72,8 @@ macro_rules! create_static_publisher {
             $interm_event_t,
             $cap_channel_bound,
             $sub_channel_bound,
-            $capture_mode
+            $capture_mode,
+            $timestamp_kind
             $(, filter_type=$filter_t)?
             $(, filter=$filter)?
         );
@@ -81,7 +86,8 @@ macro_rules! create_static_publisher {
         $(filter=$filter:expr,)?
         capture_channel_bound = $cap_channel_bound:expr,
         subscription_channel_bound = $sub_channel_bound:expr,
-        capture_mode = $capture_mode:expr
+        capture_mode = $capture_mode:expr,
+        timestamp_kind = $timestamp_kind:expr
     ) => {
         $crate::z__setup_static_publisher!(
             $publisher_name,
@@ -91,6 +97,7 @@ macro_rules! create_static_publisher {
             $cap_channel_bound,
             $sub_channel_bound,
             $capture_mode,
+            $timestamp_kind,
             scope = $visibility
             $(, filter_type=$filter_t)?
             $(, filter=$filter)?
@@ -106,7 +113,8 @@ macro_rules! z__setup_static_publisher {
         $interm_event_t:ty,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $capture_mode:expr
+        $capture_mode:expr,
+        $timestamp_kind:expr
         $(, scope=$visibility:vis)?
         $(, filter_type=$filter_t:ty)?
         $(, filter=$filter:expr)?
@@ -121,7 +129,8 @@ macro_rules! z__setup_static_publisher {
             $(filter=$filter,)?
             $cap_channel_bound,
             $sub_channel_bound,
-            $capture_mode
+            $capture_mode,
+            $timestamp_kind
             $(, scope=$visibility)?
         );
 
@@ -172,7 +181,8 @@ macro_rules! z__create_static_publisher {
         filter=$filter:expr,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $capture_mode:expr
+        $capture_mode:expr,
+        $timestamp_kind:expr
         $(, scope=$visibility:vis)?
     ) => {
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
@@ -184,7 +194,7 @@ macro_rules! z__create_static_publisher {
                 $filter_t
             >::with(|event| {
                 $publisher_name.on_event(event);
-            }, $filter, $capture_mode, $cap_channel_bound, $sub_channel_bound)
+            }, $filter, $capture_mode, $cap_channel_bound, $sub_channel_bound, $timestamp_kind)
         });
     };
     ($publisher_name:ident,
@@ -193,7 +203,8 @@ macro_rules! z__create_static_publisher {
         $interm_event_t:ty,
         $cap_channel_bound:expr,
         $sub_channel_bound:expr,
-        $capture_mode:expr
+        $capture_mode:expr,
+        $timestamp_kind:expr
         $(, scope=$visibility:vis)?
     ) => {
         type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $entry_t>;
@@ -207,7 +218,7 @@ macro_rules! z__create_static_publisher {
                 DummyFilter
             >::new(|event| {
                 $publisher_name.on_event(event);
-            }, $capture_mode, $cap_channel_bound, $sub_channel_bound)
+            }, $capture_mode, $cap_channel_bound, $sub_channel_bound, $timestamp_kind)
         });
     }
 }

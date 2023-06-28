@@ -28,7 +28,7 @@ fn set_different_events_in_two_threads() {
         .unwrap();
 
     assert_eq!(
-        event_side.get_id(),
+        event_side.get_event_id(),
         &id_side,
         "Received side event has wrong Id."
     );
@@ -43,7 +43,7 @@ fn set_different_events_in_two_threads() {
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
     assert_eq!(
-        event_main.get_id(),
+        event_main.get_event_id(),
         &id_main,
         "Received main event has wrong Id."
     );
@@ -74,7 +74,11 @@ fn set_same_event_in_two_threads() {
         .get_receiver()
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
-    assert_eq!(event_1.get_id(), &id, "Received event 1 has wrong Id.");
+    assert_eq!(
+        event_1.get_event_id(),
+        &id,
+        "Received event 1 has wrong Id."
+    );
     assert!(
         event_1.get_msg() == msg_main || event_1.get_msg() == msg_side,
         "Received event 1 has wrong msg."
@@ -84,7 +88,11 @@ fn set_same_event_in_two_threads() {
         .get_receiver()
         .recv_timeout(std::time::Duration::from_millis(10))
         .unwrap();
-    assert_eq!(event_2.get_id(), &id, "Received event 2 has wrong Id.");
+    assert_eq!(
+        event_2.get_event_id(),
+        &id,
+        "Received event 2 has wrong Id."
+    );
     assert!(
         event_2.get_msg() == msg_main || event_2.get_msg() == msg_side,
         "Received event 2 has wrong msg."
@@ -133,7 +141,12 @@ fn set_events_in_many_threads() {
             .get_receiver()
             .recv_timeout(std::time::Duration::from_millis(10))
             .unwrap();
-        assert_eq!(event.get_id(), &id, "Received event {} has wrong Id.", i);
+        assert_eq!(
+            event.get_event_id(),
+            &id,
+            "Received event {} has wrong Id.",
+            i
+        );
     }
 
     // Note: Starting at "2", because one recv was already consumed in loop above
@@ -143,7 +156,7 @@ fn set_events_in_many_threads() {
             .recv_timeout(std::time::Duration::from_millis(10))
             .unwrap();
         assert_eq!(
-            event.get_id(),
+            event.get_event_id(),
             &base_id,
             "Received event {} has wrong Id.",
             i
