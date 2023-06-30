@@ -136,7 +136,7 @@ macro_rules! z__setup_static_publisher {
 
         impl Drop for $interm_event_t {
             fn drop(&mut self) {
-                $publisher_name.capture(self);
+                $publisher_name._capture(self);
             }
         }
 
@@ -207,7 +207,7 @@ macro_rules! z__create_static_publisher {
         $timestamp_kind:expr
         $(, scope=$visibility:vis)?
     ) => {
-        type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $entry_t>;
+        type DummyFilter = $crate::event::filter::DummyFilter<$id_t>;
 
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
             $crate::publisher::EvidentPublisher<$id_t, $entry_t, DummyFilter>,

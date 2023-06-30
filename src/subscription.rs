@@ -16,7 +16,7 @@ pub struct Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     pub(crate) channel_id: crate::uuid::Uuid,
     pub(crate) receiver: Receiver<Arc<Event<K, T>>>,
@@ -29,7 +29,7 @@ impl<'p, K, T, F> Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     pub fn get_receiver(&self) -> &Receiver<Arc<Event<K, T>>> {
         &self.receiver
@@ -143,7 +143,7 @@ impl<'p, K, T, F> Drop for Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     fn drop(&mut self) {
         // Note: We do not want to block the current thread for *unsubscribing*, since publisher also maintains dead channels.
@@ -167,7 +167,7 @@ impl<'p, K, T, F> PartialEq for Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
@@ -178,7 +178,7 @@ impl<'p, K, T, F> Eq for Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
 }
 
@@ -186,7 +186,7 @@ impl<'p, K, T, F> Hash for Subscription<'p, K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);

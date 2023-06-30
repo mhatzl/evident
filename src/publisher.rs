@@ -69,7 +69,7 @@ pub struct EvidentPublisher<K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
@@ -87,7 +87,7 @@ impl<K, T, F> EvidentPublisher<K, T, F>
 where
     K: Id + CaptureControl,
     T: EventEntry<K>,
-    F: Filter<K, T>,
+    F: Filter<K>,
 {
     fn create(
         mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
@@ -201,22 +201,33 @@ where
         &self.filter
     }
 
-    pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        let mut event = Event::new(interm_event.take_entry());
-        if self.timestamp_kind == EventTimestampKind::Created {
-            event.timestamp_dt_utc = Some(chrono::Utc::now());
-        }
-
-        if !is_control_id(event.get_event_id()) {
+    pub fn entry_allowed(&self, entry: &impl EventEntry<K>) -> bool {
+        if !is_control_id(entry.get_event_id()) {
             if !self.capturing.load(Ordering::Acquire) {
-                return;
+                return false;
             }
 
             if let Some(filter) = &self.filter {
-                if !filter.allow_event(&event) {
-                    return;
+                if !filter.allow_entry(entry) {
+                    return false;
                 }
             }
+        }
+
+        true
+    }
+
+    pub fn _capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
+        let entry = interm_event.take_entry();
+
+        if !self.entry_allowed(&entry) {
+            return;
+        }
+
+        let entry_nr = entry.get_entry_id();
+        let mut event = Event::new(entry);
+        if self.timestamp_kind == EventTimestampKind::Created {
+            event.timestamp_dt_utc = Some(chrono::Utc::now());
         }
 
         if self.capture_blocking.load(Ordering::Acquire) {
