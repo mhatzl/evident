@@ -224,7 +224,6 @@ where
             return;
         }
 
-        let entry_nr = entry.get_entry_id();
         let mut event = Event::new(entry);
         if self.timestamp_kind == EventTimestampKind::Created {
             event.timestamp_dt_utc = Some(chrono::Utc::now());
