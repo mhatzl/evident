@@ -19,11 +19,6 @@ where
         self.get_entry().get_event_id()
     }
 
-    /// Returns the name of the associated crate of this event
-    fn get_crate_name(&self) -> &'static str {
-        self.get_entry().get_crate_name()
-    }
-
     /// Finalizing the event sends it to the publisher, and returns the [`FinalizedEvent`].
     /// This struct includes the [`Id`] used to set the event, and the id of the specific [`EventEntry`]
     /// associated with this event.

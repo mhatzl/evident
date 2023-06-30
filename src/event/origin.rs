@@ -1,9 +1,6 @@
 /// Structure representing the origin of an event.
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
-    /// Name of the crate the event was set.
-    pub crate_name: &'static str,
-
     /// Module path where the event was set.
     ///
     /// Note: Use `module_path!()`.
@@ -22,14 +19,8 @@ pub struct Origin {
 
 impl Origin {
     /// Create a new [`Origin`].
-    pub fn new(
-        crate_name: &'static str,
-        module_path: &'static str,
-        filename: &'static str,
-        line_nr: u32,
-    ) -> Self {
+    pub fn new(module_path: &'static str, filename: &'static str, line_nr: u32) -> Self {
         Origin {
-            crate_name,
             module_path,
             filename,
             line_nr,
@@ -41,8 +32,8 @@ impl From<&Origin> for String {
     /// Outputs given [`Origin`] as `crate="<crate name>", module="<module path>", file="<filename>", line=<line number>`.
     fn from(origin: &Origin) -> Self {
         format!(
-            "crate=\"{}\", module=\"{}\", file=\"{}\", line={}",
-            origin.crate_name, origin.module_path, origin.filename, origin.line_nr
+            "module=\"{}\", file=\"{}\", line={}",
+            origin.module_path, origin.filename, origin.line_nr
         )
     }
 }
@@ -56,6 +47,6 @@ impl core::fmt::Display for Origin {
 #[macro_export]
 macro_rules! this_origin {
     () => {
-        $crate::event::origin::Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line!())
+        $crate::event::origin::Origin::new(module_path!(), file!(), line!())
     };
 }
