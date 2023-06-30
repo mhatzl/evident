@@ -2,33 +2,29 @@ use std::marker::PhantomData;
 
 use crate::publisher::{CaptureControl, Id};
 
-use super::{entry::EventEntry, Event};
+use super::entry::EventEntry;
 
-pub trait Filter<K, T>
+pub trait Filter<K>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
 {
-    /// Return `true` if the event should be captured.
-    fn allow_event(&self, event: &Event<K, T>) -> bool;
+    /// Return `true` if the entry is allowed to be captured.
+    fn allow_entry(&self, entry: &impl EventEntry<K>) -> bool;
 }
 
 #[derive(Default, Debug)]
-pub struct DummyFilter<K, T>
+pub struct DummyFilter<K>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
 {
-    v1: PhantomData<K>,
-    v2: PhantomData<T>,
+    v: PhantomData<K>,
 }
 
-impl<K, T> Filter<K, T> for DummyFilter<K, T>
+impl<K> Filter<K> for DummyFilter<K>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
 {
-    fn allow_event(&self, _event: &Event<K, T>) -> bool {
+    fn allow_entry(&self, _entry: &impl EventEntry<K>) -> bool {
         true
     }
 }

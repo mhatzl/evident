@@ -136,7 +136,7 @@ macro_rules! z__setup_static_publisher {
 
         impl Drop for $interm_event_t {
             fn drop(&mut self) {
-                $publisher_name.capture(self);
+                $publisher_name._capture(self);
             }
         }
 
@@ -149,16 +149,16 @@ macro_rules! z__setup_static_publisher {
 
         impl $crate::event::finalize::FinalizeEvent<$id_t, $entry_t> for $interm_event_t {
             fn finalize(mut self) -> $crate::event::finalize::FinalizedEvent<$id_t> {
+                let event_id = $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::get_event_id(&self).clone();
                 let entry_nr = $publisher_name.incr_entry_nr();
                 $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::set_entry_nr(&mut self, entry_nr);
 
-                let captured_event = $crate::event::finalize::FinalizedEvent::new(
-                    // Note: Not cloning here would not fully drop the event => no event would be captured.
-                    $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::get_event_id(&self).clone(),
-                    entry_nr,
-                );
                 drop(self);
-                captured_event
+
+                $crate::event::finalize::FinalizedEvent::new(
+                    event_id,
+                    entry_nr,
+                )
             }
         }
 
@@ -222,7 +222,7 @@ macro_rules! z__create_static_publisher {
         $timestamp_kind:expr
         $(, scope=$visibility:vis)?
     ) => {
-        type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $entry_t>;
+        type DummyFilter = $crate::event::filter::DummyFilter<$id_t>;
 
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
             $crate::publisher::EvidentPublisher<$id_t, $entry_t, DummyFilter>,

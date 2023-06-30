@@ -22,8 +22,8 @@ where
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct FinalizedEvent<K: Id> {
-    pub event_id: K,
-    pub entry_nr: u64,
+    event_id: K,
+    entry_nr: u64,
 }
 
 impl<K: Id> FinalizedEvent<K> {
