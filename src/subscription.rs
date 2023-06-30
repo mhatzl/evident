@@ -18,7 +18,7 @@ where
     T: EventEntry<K>,
     F: Filter<K, T>,
 {
-    pub(crate) channel_id: crate::uuid::Uuid,
+    pub(crate) channel_id: uuid::Uuid,
     pub(crate) receiver: Receiver<Arc<Event<K, T>>>,
     pub(crate) sub_to_all: bool,
     pub(crate) subscriptions: Option<HashSet<K>>,
@@ -209,7 +209,7 @@ where
     K: Id,
     T: EventEntry<K>,
 {
-    pub(crate) channel_id: crate::uuid::Uuid,
+    pub(crate) channel_id: uuid::Uuid,
     pub(crate) sender: SyncSender<Arc<Event<K, T>>>,
 }
 

@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
     sync::{
-        atomic::{AtomicBool, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
         mpsc::{self, SyncSender, TrySendError},
         Arc, RwLock,
     },
@@ -62,7 +62,7 @@ pub enum EventTimestampKind {
     Created,
 }
 
-type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
+type Subscriber<K, T> = HashMap<uuid::Uuid, SubscriptionSender<K, T>>;
 type Capturer<K, T> = SyncSender<Event<K, T>>;
 
 pub struct EvidentPublisher<K, T, F>
@@ -74,13 +74,14 @@ where
     pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
     pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
     pub(crate) capturer: Capturer<K, T>,
-    filter: Option<F>,
     capturing: Arc<AtomicBool>,
     capture_blocking: Arc<AtomicBool>,
     capture_channel_bound: usize,
     subscription_channel_bound: usize,
     missed_captures: Arc<AtomicUsize>,
     timestamp_kind: EventTimestampKind,
+    filter: Option<F>,
+    entry_cnt: Arc<AtomicU64>,
 }
 
 impl<K, T, F> EvidentPublisher<K, T, F>
@@ -152,13 +153,14 @@ where
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: send,
-            filter,
             capturing,
             capture_blocking: mode,
             capture_channel_bound,
             subscription_channel_bound,
             missed_captures: Arc::new(AtomicUsize::new(0)),
             timestamp_kind,
+            filter,
+            entry_cnt: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -201,8 +203,14 @@ where
         &self.filter
     }
 
+    pub fn incr_entry_nr(&self) -> u64 {
+        self.entry_cnt.fetch_add(1, Ordering::AcqRel)
+    }
+
     pub fn capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
-        let mut event = Event::new(interm_event.take_entry());
+        let entry = interm_event.take_entry();
+        let entry_nr = entry.get_entry_nr();
+        let mut event = Event::new(entry, entry_nr);
         if self.timestamp_kind == EventTimestampKind::Created {
             event.timestamp_dt_utc = Some(chrono::Utc::now());
         }
@@ -272,7 +280,7 @@ where
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + self.subscription_channel_bound);
-        let channel_id = crate::uuid::Uuid::new_v4();
+        let channel_id = uuid::Uuid::new_v4();
         let subscription_sender = SubscriptionSender { channel_id, sender };
 
         match self.subscriptions.write().ok() {
@@ -306,7 +314,7 @@ where
 
     pub fn subscribe_to_all_events(&self) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
         let (sender, receiver) = mpsc::sync_channel(self.capture_channel_bound);
-        let channel_id = crate::uuid::Uuid::new_v4();
+        let channel_id = uuid::Uuid::new_v4();
 
         match self.any_event.write().ok() {
             Some(mut locked_vec) => {
@@ -331,21 +339,19 @@ where
     }
 
     pub fn start_capturing(&self) {
-        let start_event = Event::new(EventEntry::new(
-            K::start_id(),
-            "Starting global capturing.",
-            this_origin!(),
-        ));
+        let start_event = Event::new(
+            EventEntry::new(K::start_id(), "Starting global capturing.", this_origin!()),
+            self.incr_entry_nr(),
+        );
 
         let _ = self.capturer.send(start_event);
     }
 
     pub fn stop_capturing(&self) {
-        let stop_event = Event::new(EventEntry::new(
-            K::stop_id(),
-            "Stopping global capturing.",
-            this_origin!(),
-        ));
+        let stop_event = Event::new(
+            EventEntry::new(K::stop_id(), "Stopping global capturing.", this_origin!()),
+            self.incr_entry_nr(),
+        );
 
         let _ = self.capturer.send(stop_event);
     }
@@ -354,8 +360,8 @@ where
         let arc_event = Arc::new(event);
         let key = arc_event.entry.get_event_id();
 
-        let mut bad_subs: Vec<crate::uuid::Uuid> = Vec::new();
-        let mut bad_any_event: Vec<crate::uuid::Uuid> = Vec::new();
+        let mut bad_subs: Vec<uuid::Uuid> = Vec::new();
+        let mut bad_any_event: Vec<uuid::Uuid> = Vec::new();
 
         if let Ok(locked_subscriptions) = self.subscriptions.read() {
             if let Some(sub_senders) = locked_subscriptions.get(key) {

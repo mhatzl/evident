@@ -2,11 +2,11 @@ use std::{fmt::Display, marker::PhantomData};
 
 use crate::publisher::Id;
 
-use self::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
+use self::{entry::EventEntry, finalize::FinalizeEvent, origin::Origin};
 
 pub mod entry;
 pub mod filter;
-pub mod finalized;
+pub mod finalize;
 pub mod intermediary;
 pub mod origin;
 
@@ -17,12 +17,12 @@ pub mod origin;
 /// * `event_id` ... The [`Id`] used for this event
 /// * `msg` ... Main message that is set for this event (should be a user-centered event description)
 /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-pub fn set_event_with_msg<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+pub fn set_event_with_msg<K: Id, E: EventEntry<K>, F: FinalizeEvent<K, E>>(
     event_id: K,
     msg: &str,
     origin: Origin,
-) -> I {
-    I::new(event_id, msg, origin)
+) -> F {
+    F::new(event_id, msg, origin)
 }
 
 /// Set an event for an [`Id`].
@@ -31,12 +31,12 @@ pub fn set_event_with_msg<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
 ///
 /// * `event_id` ... The [`Id`] used for this event (`to_string()` of the given [`Id`] is used for the event message)
 /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-pub fn set_event<K: Id + Display, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+pub fn set_event<K: Id + Display, E: EventEntry<K>, F: FinalizeEvent<K, E>>(
     event_id: K,
     origin: Origin,
-) -> I {
+) -> F {
     let msg = event_id.to_string();
-    I::new(event_id, &msg, origin)
+    F::new(event_id, &msg, origin)
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -46,6 +46,7 @@ where
     T: EventEntry<K>,
 {
     pub(crate) entry: T,
+    entry_nr: u64,
     phantom: PhantomData<K>,
 
     thread_id: std::thread::ThreadId,
@@ -55,11 +56,12 @@ where
 }
 
 impl<K: Id, T: EventEntry<K>> Event<K, T> {
-    pub fn new(entry: T) -> Self {
+    pub fn new(entry: T, entry_nr: u64) -> Self {
         let curr_thread = std::thread::current();
 
         Event {
             entry,
+            entry_nr,
             phantom: PhantomData,
 
             thread_id: curr_thread.id(),
@@ -79,8 +81,8 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
         &self.entry
     }
 
-    pub fn get_entry_id(&self) -> crate::uuid::Uuid {
-        self.entry.get_entry_id()
+    pub fn get_entry_nr(&self) -> u64 {
+        self.entry_nr
     }
 
     /// Get the main message that was set when the event entry was created.
@@ -110,7 +112,7 @@ impl<K: Id, T: EventEntry<K>> core::fmt::Debug for Event<K, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Event")
             .field("id", &self.entry.get_event_id())
-            .field("entry_id", &self.entry.get_entry_id())
+            .field("entry_nr", &self.entry_nr)
             .field("origin", &self.entry.get_origin())
             .finish()
     }

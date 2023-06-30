@@ -142,21 +142,36 @@ macro_rules! z__setup_static_publisher {
 
         // Note: Re-impl `finalize()` for better IntelliSense.
         impl $interm_event_t {
-            pub fn finalize(self) -> $crate::event::finalized::FinalizedEvent<$id_t> {
-                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(self)
+            pub fn finalize(self) -> $crate::event::finalize::FinalizedEvent<$id_t> {
+                $crate::event::finalize::FinalizeEvent::<$id_t, $entry_t>::finalize(self)
+            }
+        }
+
+        impl $crate::event::finalize::FinalizeEvent<$id_t, $entry_t> for $interm_event_t {
+            fn finalize(mut self) -> $crate::event::finalize::FinalizedEvent<$id_t> {
+                let entry_nr = $publisher_name.incr_entry_nr();
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::set_entry_nr(&mut self, entry_nr);
+
+                let captured_event = $crate::event::finalize::FinalizedEvent::new(
+                    // Note: Not cloning here would not fully drop the event => no event would be captured.
+                    $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::get_event_id(&self).clone(),
+                    entry_nr,
+                );
+                drop(self);
+                captured_event
             }
         }
 
         impl From<$interm_event_t> for $id_t {
             fn from(intermed_event: $interm_event_t) -> Self {
-                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(intermed_event).into_event_id()
+                $crate::event::finalize::FinalizeEvent::<$id_t, $entry_t>::finalize(intermed_event).into_event_id()
             }
         }
 
         impl PartialEq for $entry_t {
             fn eq(&self, other: &Self) -> bool {
                 $crate::event::entry::EventEntry::<$id_t>::get_event_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_event_id(other)
-                && $crate::event::entry::EventEntry::<$id_t>::get_entry_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_entry_id(other)
+                && $crate::event::entry::EventEntry::<$id_t>::get_entry_nr(self) == $crate::event::entry::EventEntry::<$id_t>::get_entry_nr(other)
             }
         }
 
@@ -165,7 +180,7 @@ macro_rules! z__setup_static_publisher {
         impl std::hash::Hash for $entry_t
         {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                $crate::event::entry::EventEntry::<$id_t>::get_entry_id(self).hash(state);
+                $crate::event::entry::EventEntry::<$id_t>::get_entry_nr(self).hash(state);
             }
         }
     };

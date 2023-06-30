@@ -17,6 +17,10 @@ impl IntermediaryEvent<MinId, MinEventEntry> for MinInterimEvent {
         &self.entry
     }
 
+    fn set_entry_nr(&mut self, entry_nr: u64) {
+        self.entry.entry_nr = entry_nr;
+    }
+
     fn take_entry(&mut self) -> MinEventEntry {
         std::mem::take(&mut self.entry)
     }

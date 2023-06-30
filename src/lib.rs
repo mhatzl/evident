@@ -6,4 +6,3 @@ pub mod subscription;
 // Re-export external crates used in API
 pub use chrono;
 pub use once_cell;
-pub use uuid;
