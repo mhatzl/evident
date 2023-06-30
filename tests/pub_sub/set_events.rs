@@ -33,11 +33,6 @@ fn set_event_has_correct_origin() {
         "Filenames are not equal."
     );
     assert_eq!(
-        event.get_origin().crate_name,
-        env!("CARGO_PKG_NAME"),
-        "Crate names are not equal."
-    );
-    assert_eq!(
         event.get_origin().module_path,
         module_path!(),
         "Module paths are not equal."
@@ -45,8 +40,7 @@ fn set_event_has_correct_origin() {
     assert_eq!(
         event.get_origin().to_string(),
         format!(
-            "crate=\"{}\", module=\"{}\", file=\"{}\", line={}",
-            env!("CARGO_PKG_NAME"),
+            "module=\"{}\", file=\"{}\", line={}",
             module_path!(),
             file!(),
             line_nr
@@ -117,13 +111,13 @@ fn set_same_event_twice_with_same_origin() {
     evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
-        Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
+        Origin::new(module_path!(), file!(), line),
     )
     .finalize();
     evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
         id,
         msg,
-        Origin::new(env!("CARGO_PKG_NAME"), module_path!(), file!(), line),
+        Origin::new(module_path!(), file!(), line),
     )
     .finalize();
 
