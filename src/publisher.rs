@@ -110,7 +110,7 @@ where
                     while let Ok(mut event) = recv.recv() {
                         let id = event.get_event_id().clone();
                         if timestamp_kind == EventTimestampKind::Captured {
-                            event.timestamp_dt_utc = Some(chrono::Utc::now());
+                            event.timestamp = Some(std::time::SystemTime::now());
                         }
 
                         on_event(event);
@@ -224,7 +224,7 @@ where
 
         let mut event = Event::new(entry);
         if self.timestamp_kind == EventTimestampKind::Created {
-            event.timestamp_dt_utc = Some(chrono::Utc::now());
+            event.timestamp = Some(std::time::SystemTime::now());
         }
 
         if self.capture_blocking.load(Ordering::Acquire) {

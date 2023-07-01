@@ -60,7 +60,7 @@ where
     thread_id: std::thread::ThreadId,
     thread_name: Option<String>,
 
-    pub(crate) timestamp_dt_utc: Option<crate::chrono::DateTime<crate::chrono::offset::Utc>>,
+    pub(crate) timestamp: Option<std::time::SystemTime>,
 }
 
 impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
@@ -75,7 +75,7 @@ impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
             thread_id: curr_thread.id(),
             thread_name: curr_thread.name().map(|s| s.to_string()),
 
-            timestamp_dt_utc: None,
+            timestamp: None,
         }
     }
 
@@ -111,8 +111,8 @@ impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
     }
 
     /// Get the timestamp of the event as UTC datetime.
-    pub fn get_timestamp(&self) -> &Option<crate::chrono::DateTime<crate::chrono::offset::Utc>> {
-        &self.timestamp_dt_utc
+    pub fn get_timestamp(&self) -> &Option<std::time::SystemTime> {
+        &self.timestamp
     }
 }
 
