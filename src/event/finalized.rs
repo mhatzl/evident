@@ -1,4 +1,4 @@
-use crate::publisher::Id;
+use super::Id;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct FinalizedEvent<K: Id> {

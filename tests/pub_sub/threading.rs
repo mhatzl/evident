@@ -33,7 +33,7 @@ fn set_different_events_in_two_threads() {
         "Received side event has wrong Id."
     );
     assert_eq!(
-        event_side.get_msg(),
+        event_side.get_msg().unwrap(),
         msg_side,
         "Received side event has wrong msg."
     );
@@ -48,7 +48,7 @@ fn set_different_events_in_two_threads() {
         "Received main event has wrong Id."
     );
     assert_eq!(
-        event_main.get_msg(),
+        event_main.get_msg().unwrap(),
         msg_main,
         "Received main event has wrong msg."
     );
@@ -80,7 +80,7 @@ fn set_same_event_in_two_threads() {
         "Received event 1 has wrong Id."
     );
     assert!(
-        event_1.get_msg() == msg_main || event_1.get_msg() == msg_side,
+        event_1.get_msg().unwrap() == msg_main || event_1.get_msg().unwrap() == msg_side,
         "Received event 1 has wrong msg."
     );
 
@@ -94,7 +94,7 @@ fn set_same_event_in_two_threads() {
         "Received event 2 has wrong Id."
     );
     assert!(
-        event_2.get_msg() == msg_main || event_2.get_msg() == msg_side,
+        event_2.get_msg().unwrap() == msg_main || event_2.get_msg().unwrap() == msg_side,
         "Received event 2 has wrong msg."
     );
 

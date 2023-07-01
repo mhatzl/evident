@@ -9,6 +9,7 @@ mod interim_event;
 evident::create_static_publisher!(
     PUBLISHER,
     id_type = MinId,
+    msg_type = String,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
@@ -21,6 +22,7 @@ evident::create_static_publisher!(
 evident::create_set_event_macro!(
     no_export,
     id_type = MinId,
+    msg_type = String,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent
 );

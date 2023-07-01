@@ -6,8 +6,8 @@ pub struct MinInterimEvent {
     entry: MinEventEntry,
 }
 
-impl IntermediaryEvent<MinId, MinEventEntry> for MinInterimEvent {
-    fn new(event_id: MinId, msg: &str, origin: Origin) -> Self {
+impl IntermediaryEvent<MinId, String, MinEventEntry> for MinInterimEvent {
+    fn new(event_id: MinId, msg: Option<impl Into<String>>, origin: Origin) -> Self {
         MinInterimEvent {
             entry: MinEventEntry::new(event_id, msg, origin),
         }

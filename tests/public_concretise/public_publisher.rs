@@ -7,6 +7,7 @@ use crate::public_concretise::{entry::MinEventEntry, id::MinId, interim_event::M
 evident::create_static_publisher!(
     pub PUB_PUBLISHER,
     id_type = MinId,
+    msg_type = String,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
@@ -18,6 +19,7 @@ evident::create_static_publisher!(
 // Note: Fully qualified path to access the generated `set_event!()` macro from anywhere.
 evident::create_set_event_macro!(
     id_type = crate::public_concretise::MinId,
+    msg_type = String,
     entry_type = crate::public_concretise::entry::MinEventEntry,
     interm_event_type = crate::public_concretise::interim_event::MinInterimEvent
 );

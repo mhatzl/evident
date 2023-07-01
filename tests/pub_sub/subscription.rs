@@ -22,7 +22,11 @@ fn two_ids_separate_receiver() {
         &id_1,
         "Received event 1 has wrong Id."
     );
-    assert_eq!(event_1.get_msg(), msg_1, "Received event 1 has wrong msg.");
+    assert_eq!(
+        event_1.get_msg().unwrap(),
+        msg_1,
+        "Received event 1 has wrong msg."
+    );
 
     let event_2 = recv_2
         .get_receiver()
@@ -33,7 +37,11 @@ fn two_ids_separate_receiver() {
         &id_2,
         "Received event 2 has wrong Id."
     );
-    assert_eq!(event_2.get_msg(), msg_2, "Received event 2 has wrong msg.");
+    assert_eq!(
+        event_2.get_msg().unwrap(),
+        msg_2,
+        "Received event 2 has wrong msg."
+    );
 }
 
 #[test]
@@ -55,7 +63,11 @@ fn one_id_separate_receiver() {
         &id,
         "Received event 1 has wrong Id."
     );
-    assert_eq!(event_1.get_msg(), msg, "Received event 1 has wrong msg.");
+    assert_eq!(
+        event_1.get_msg().unwrap(),
+        msg,
+        "Received event 1 has wrong msg."
+    );
 
     let event_2 = recv_2
         .get_receiver()
@@ -66,7 +78,11 @@ fn one_id_separate_receiver() {
         &id,
         "Received event 2 has wrong Id."
     );
-    assert_eq!(event_2.get_msg(), msg, "Received event 2 has wrong msg.");
+    assert_eq!(
+        event_2.get_msg().unwrap(),
+        msg,
+        "Received event 2 has wrong msg."
+    );
 
     assert_eq!(event_1, event_2, "Received events are not equal.");
 }
@@ -92,7 +108,7 @@ fn subscribe_to_two_ids_at_once() {
         "Received event 1 has wrong Id."
     );
     assert!(
-        event_1.get_msg() == msg_1 || event_1.get_msg() == msg_2,
+        event_1.get_msg().unwrap() == msg_1 || event_1.get_msg().unwrap() == msg_2,
         "Received event 1 has wrong msg."
     );
 
@@ -105,7 +121,7 @@ fn subscribe_to_two_ids_at_once() {
         "Received event 2 has wrong Id."
     );
     assert!(
-        event_2.get_msg() == msg_1 || event_2.get_msg() == msg_2,
+        event_2.get_msg().unwrap() == msg_1 || event_2.get_msg().unwrap() == msg_2,
         "Received event 2 has wrong msg."
     );
     assert_ne!(
@@ -136,7 +152,11 @@ fn receiver_for_all_events_two_events_set() {
         &id_1,
         "Received event 1 has wrong Id."
     );
-    assert_eq!(event_1.get_msg(), msg_1, "Received event 1 has wrong msg.");
+    assert_eq!(
+        event_1.get_msg().unwrap(),
+        msg_1,
+        "Received event 1 has wrong msg."
+    );
 
     let event_2 = recv_all
         .get_receiver()
@@ -147,7 +167,11 @@ fn receiver_for_all_events_two_events_set() {
         &id_2,
         "Received event 2 has wrong Id."
     );
-    assert_eq!(event_2.get_msg(), msg_2, "Received event 2 has wrong msg.");
+    assert_eq!(
+        event_2.get_msg().unwrap(),
+        msg_2,
+        "Received event 2 has wrong msg."
+    );
 }
 
 #[test]
@@ -169,7 +193,11 @@ fn receiver_unsubscribes_single_id() {
         &id_1,
         "Received event 1 has wrong Id."
     );
-    assert_eq!(event_1.get_msg(), msg_1, "Received event 1 has wrong msg.");
+    assert_eq!(
+        event_1.get_msg().unwrap(),
+        msg_1,
+        "Received event 1 has wrong msg."
+    );
 
     recv.unsubscribe_id(id_1).unwrap();
 
@@ -216,7 +244,11 @@ fn receiver_subscribes_to_new_id() {
         &id_1,
         "Received event 1 has wrong Id."
     );
-    assert_eq!(event_1.get_msg(), msg_1, "Received event 1 has wrong msg.");
+    assert_eq!(
+        event_1.get_msg().unwrap(),
+        msg_1,
+        "Received event 1 has wrong msg."
+    );
 
     // Note: Sleep guarantees that `on_event` thread processed all previous events.
     std::thread::sleep(std::time::Duration::from_millis(100));
@@ -235,7 +267,11 @@ fn receiver_subscribes_to_new_id() {
         &id_2,
         "Received event 2 has wrong Id."
     );
-    assert_eq!(event_2.get_msg(), msg_2, "Received event 2 has wrong msg.");
+    assert_eq!(
+        event_2.get_msg().unwrap(),
+        msg_2,
+        "Received event 2 has wrong msg."
+    );
 }
 
 #[test]

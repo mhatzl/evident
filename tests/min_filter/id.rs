@@ -3,7 +3,7 @@ pub struct MinId {
     pub id: isize,
 }
 
-impl evident::publisher::Id for MinId {}
+impl evident::event::Id for MinId {}
 
 // Note: `id: 1` is important, since filter would not allow an event with this id.
 // Test in `mod` ensures that stop capturing event is still captured.

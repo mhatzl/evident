@@ -8,7 +8,8 @@
 /// ```ignore
 /// evident::create_static_publisher!(
 ///     <visibility specifier> <Name for the publisher>,
-///     id_type = <Struct implementing `evident::publisher::Id`>,
+///     id_type = <Struct implementing `evident::event::Id`>,
+///     msg_type = <Struct implementing `evident::event::Msg`>,
 ///     entry_type = <Struct implementing `evident::event::entry::EventEntry`>,
 ///     interm_event_type = <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
 ///     filter_type = <Optional Struct implementing `evident::event::filter::Filter`>,
@@ -26,6 +27,7 @@
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
+///     msg_type = String,
 ///     entry_type = MyEventEntry,
 ///     interm_event_type = MyIntermEvent,
 ///     capture_channel_bound = 100,
@@ -41,6 +43,7 @@
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
+///     msg_type = String,
 ///     entry_type = MyEventEntry,
 ///     interm_event_type = MyIntermEvent,
 ///     filter_type = MyFilter,
@@ -56,6 +59,7 @@
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
         id_type = $id_t:ty,
+        msg_type = $msg_t:ty,
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty,
         $(filter_type=$filter_t:ty,)?
@@ -68,6 +72,7 @@ macro_rules! create_static_publisher {
         $crate::z__setup_static_publisher!(
             $publisher_name,
             $id_t,
+            $msg_t,
             $entry_t,
             $interm_event_t,
             $cap_channel_bound,
@@ -80,6 +85,7 @@ macro_rules! create_static_publisher {
     };
     ($visibility:vis $publisher_name:ident,
         id_type = $id_t:ty,
+        msg_type = $msg_t:ty,
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty,
         $(filter_type=$filter_t:ty,)?
@@ -92,6 +98,7 @@ macro_rules! create_static_publisher {
         $crate::z__setup_static_publisher!(
             $publisher_name,
             $id_t,
+            $msg_t,
             $entry_t,
             $interm_event_t,
             $cap_channel_bound,
@@ -109,6 +116,7 @@ macro_rules! create_static_publisher {
 macro_rules! z__setup_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
+        $msg_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
         $cap_channel_bound:expr,
@@ -123,6 +131,7 @@ macro_rules! z__setup_static_publisher {
         $crate::z__create_static_publisher!(
             $publisher_name,
             $id_t,
+            $msg_t,
             $entry_t,
             $interm_event_t,
             $(filter_type=$filter_t,)?
@@ -143,20 +152,20 @@ macro_rules! z__setup_static_publisher {
         // Note: Re-impl `finalize()` for better IntelliSense.
         impl $interm_event_t {
             pub fn finalize(self) -> $crate::event::finalized::FinalizedEvent<$id_t> {
-                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(self)
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $msg_t, $entry_t>::finalize(self)
             }
         }
 
         impl From<$interm_event_t> for $id_t {
             fn from(intermed_event: $interm_event_t) -> Self {
-                $crate::event::intermediary::IntermediaryEvent::<$id_t, $entry_t>::finalize(intermed_event).into_event_id()
+                $crate::event::intermediary::IntermediaryEvent::<$id_t, $msg_t, $entry_t>::finalize(intermed_event).into_event_id()
             }
         }
 
         impl PartialEq for $entry_t {
             fn eq(&self, other: &Self) -> bool {
-                $crate::event::entry::EventEntry::<$id_t>::get_event_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_event_id(other)
-                && $crate::event::entry::EventEntry::<$id_t>::get_entry_id(self) == $crate::event::entry::EventEntry::<$id_t>::get_entry_id(other)
+                $crate::event::entry::EventEntry::<$id_t, $msg_t>::get_event_id(self) == $crate::event::entry::EventEntry::<$id_t, $msg_t>::get_event_id(other)
+                && $crate::event::entry::EventEntry::<$id_t, $msg_t>::get_entry_id(self) == $crate::event::entry::EventEntry::<$id_t, $msg_t>::get_entry_id(other)
             }
         }
 
@@ -165,7 +174,7 @@ macro_rules! z__setup_static_publisher {
         impl std::hash::Hash for $entry_t
         {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                $crate::event::entry::EventEntry::<$id_t>::get_entry_id(self).hash(state);
+                $crate::event::entry::EventEntry::<$id_t, $msg_t>::get_entry_id(self).hash(state);
             }
         }
     };
@@ -175,6 +184,7 @@ macro_rules! z__setup_static_publisher {
 macro_rules! z__create_static_publisher {
     ($publisher_name:ident,
         $id_t:ty,
+        $msg_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
         filter_type=$filter_t:ty,
@@ -186,10 +196,11 @@ macro_rules! z__create_static_publisher {
         $(, scope=$visibility:vis)?
     ) => {
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
-            $crate::publisher::EvidentPublisher<$id_t, $entry_t, $filter_t>,
+            $crate::publisher::EvidentPublisher<$id_t, $msg_t, $entry_t, $filter_t>,
         > = $crate::once_cell::sync::Lazy::new(|| {
             $crate::publisher::EvidentPublisher::<
                 $id_t,
+                $msg_t,
                 $entry_t,
                 $filter_t
             >::with(|event| {
@@ -199,6 +210,7 @@ macro_rules! z__create_static_publisher {
     };
     ($publisher_name:ident,
         $id_t:ty,
+        $msg_t:ty,
         $entry_t:ty,
         $interm_event_t:ty,
         $cap_channel_bound:expr,
@@ -207,13 +219,14 @@ macro_rules! z__create_static_publisher {
         $timestamp_kind:expr
         $(, scope=$visibility:vis)?
     ) => {
-        type DummyFilter = $crate::event::filter::DummyFilter<$id_t>;
+        type DummyFilter = $crate::event::filter::DummyFilter<$id_t, $msg_t>;
 
         $($visibility)? static $publisher_name: $crate::once_cell::sync::Lazy<
-            $crate::publisher::EvidentPublisher<$id_t, $entry_t, DummyFilter>,
+            $crate::publisher::EvidentPublisher<$id_t, $msg_t, $entry_t, DummyFilter>,
         > = $crate::once_cell::sync::Lazy::new(|| {
             $crate::publisher::EvidentPublisher::<
                 $id_t,
+                $msg_t,
                 $entry_t,
                 DummyFilter
             >::new(|event| {
@@ -263,19 +276,20 @@ macro_rules! z__create_static_publisher {
 #[macro_export]
 macro_rules! create_set_event_macro {
     (id_type = $id_t:ty,
+        msg_type = $msg_t:ty,
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
         #[macro_export]
         macro_rules! set_event {
             ($id:expr) => {
-                $crate::event::set_event::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event::<$id_t, $msg_t, $entry_t, $interm_event_t>(
                     $id,
                     $crate::this_origin!(),
                 )
             };
             ($id:expr, $msg:expr) => {
-                $crate::event::set_event_with_msg::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event_with_msg::<$id_t, $msg_t, $entry_t, $interm_event_t>(
                     $id,
                     $msg,
                     $crate::this_origin!(),
@@ -285,18 +299,19 @@ macro_rules! create_set_event_macro {
     };
     (no_export,
         id_type = $id_t:ty,
+        msg_type = $msg_t:ty,
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
         macro_rules! set_event {
             ($id:expr) => {
-                $crate::event::set_event::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event::<$id_t, $msg_t, $entry_t, $interm_event_t>(
                     $id,
                     $crate::this_origin!(),
                 )
             };
             ($id:expr, $msg:expr) => {
-                $crate::event::set_event_with_msg::<$id_t, $entry_t, $interm_event_t>(
+                $crate::event::set_event_with_msg::<$id_t, $msg_t, $entry_t, $interm_event_t>(
                     $id,
                     $msg,
                     $crate::this_origin!(),
