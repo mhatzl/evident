@@ -5,18 +5,16 @@ use super::id::MinId;
 #[derive(Default, Clone)]
 pub struct MinEventEntry {
     event_id: MinId,
-    msg: String,
-
+    msg: Option<String>,
     entry_id: evident::uuid::Uuid,
     origin: Origin,
 }
 
-impl EventEntry<MinId> for MinEventEntry {
-    fn new(event_id: MinId, msg: &str, origin: Origin) -> Self {
+impl EventEntry<MinId, String> for MinEventEntry {
+    fn new(event_id: MinId, msg: Option<impl Into<String>>, origin: Origin) -> Self {
         MinEventEntry {
             event_id,
-            msg: msg.to_string(),
-
+            msg: msg.map(|m| m.into()),
             entry_id: evident::uuid::Uuid::new_v4(),
             origin,
         }
@@ -34,8 +32,8 @@ impl EventEntry<MinId> for MinEventEntry {
         self.entry_id
     }
 
-    fn get_msg(&self) -> &str {
-        &self.msg
+    fn get_msg(&self) -> Option<&String> {
+        self.msg.as_ref()
     }
 
     fn get_origin(&self) -> &evident::event::origin::Origin {

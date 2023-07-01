@@ -1,14 +1,13 @@
-use crate::publisher::Id;
+use super::{entry::EventEntry, finalized::FinalizedEvent, origin::Origin, Id, Msg};
 
-use super::{entry::EventEntry, finalized::FinalizedEvent, origin::Origin};
-
-pub trait IntermediaryEvent<K, T>
+pub trait IntermediaryEvent<K, M, T>
 where
     Self: std::marker::Sized,
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
-    fn new(event_id: K, msg: &str, origin: Origin) -> Self;
+    fn new(event_id: K, msg: Option<impl Into<M>>, origin: Origin) -> Self;
 
     fn get_entry(&self) -> &T;
 

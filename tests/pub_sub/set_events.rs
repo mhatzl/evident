@@ -108,13 +108,13 @@ fn set_same_event_twice_with_same_origin() {
 
     let recv = TESTS_PUBLISHER.subscribe(id).unwrap();
 
-    evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
+    evident::event::set_event_with_msg::<MinId, String, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(module_path!(), file!(), line),
     )
     .finalize();
-    evident::event::set_event_with_msg::<MinId, MinEventEntry, MinInterimEvent>(
+    evident::event::set_event_with_msg::<MinId, String, MinEventEntry, MinInterimEvent>(
         id,
         msg,
         Origin::new(module_path!(), file!(), line),
@@ -163,7 +163,7 @@ fn set_event_received_exactly_once_per_receiver() {
         .unwrap();
 
     assert_eq!(
-        recv_1_event_1.get_msg(),
+        recv_1_event_1.get_msg().unwrap(),
         msg,
         "Event messages are not equal."
     );
@@ -183,7 +183,7 @@ fn set_event_received_exactly_once_per_receiver() {
         .unwrap();
 
     assert_eq!(
-        recv_2_event_1.get_msg(),
+        recv_2_event_1.get_msg().unwrap(),
         msg,
         "Event messages are not equal."
     );
@@ -212,7 +212,7 @@ fn set_event_with_literal_msg() {
         .unwrap();
 
     assert_eq!(
-        event.get_msg(),
+        event.get_msg().unwrap(),
         "Set event message",
         "Event messages are not equal."
     );
@@ -232,7 +232,7 @@ fn set_event_using_msg_expression() {
         .unwrap();
 
     assert_eq!(
-        event.get_msg(),
+        event.get_msg().unwrap(),
         &format!("Set message with id={}", id),
         "Event messages are not equal."
     );
@@ -299,13 +299,11 @@ fn set_event_has_current_thread_id() {
 
 #[test]
 fn spawned_set_event_has_different_thread_id() {
-    let msg = "Set first message";
-
     let recv = TESTS_PUBLISHER.subscribe(TestLogId::Id.into()).unwrap();
     let thread_id = std::thread::current().id();
 
     std::thread::spawn(|| {
-        set_event!(TestLogId::Id.into(), msg).finalize();
+        set_event!(TestLogId::Id.into(), "Set event message").finalize();
     });
 
     std::thread::sleep(std::time::Duration::from_millis(10));

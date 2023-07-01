@@ -1,11 +1,9 @@
 use std::hash::Hash;
 
-use crate::publisher::Id;
+use super::{origin::Origin, Id, Msg};
 
-use super::origin::Origin;
-
-pub trait EventEntry<K: Id>: Default + Clone + Hash + Send + Sync + 'static {
-    fn new(event_id: K, msg: &str, origin: Origin) -> Self;
+pub trait EventEntry<K: Id, M: Msg>: Default + Clone + Hash + Send + Sync + 'static {
+    fn new(event_id: K, msg: Option<impl Into<M>>, origin: Origin) -> Self;
 
     fn get_event_id(&self) -> &K;
 
@@ -14,7 +12,7 @@ pub trait EventEntry<K: Id>: Default + Clone + Hash + Send + Sync + 'static {
     fn get_entry_id(&self) -> crate::uuid::Uuid;
 
     /// Get the main message that was set when the event entry was created.
-    fn get_msg(&self) -> &str;
+    fn get_msg(&self) -> Option<&M>;
 
     fn get_origin(&self) -> &Origin;
 }

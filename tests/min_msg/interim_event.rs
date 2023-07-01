@@ -1,13 +1,13 @@
 use evident::event::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 
-use super::{entry::MinEventEntry, id::MinId};
+use super::{entry::MinEventEntry, id::MinId, msg::MinMsg};
 
 pub struct MinInterimEvent {
     entry: MinEventEntry,
 }
 
-impl IntermediaryEvent<MinId, String, MinEventEntry> for MinInterimEvent {
-    fn new(event_id: MinId, msg: Option<impl Into<String>>, origin: Origin) -> Self {
+impl IntermediaryEvent<MinId, MinMsg, MinEventEntry> for MinInterimEvent {
+    fn new(event_id: MinId, msg: Option<impl Into<MinMsg>>, origin: Origin) -> Self {
         MinInterimEvent {
             entry: MinEventEntry::new(event_id, msg, origin),
         }

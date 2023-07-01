@@ -1,15 +1,16 @@
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
-use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
+use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent, msg::MinMsg};
 
 mod entry;
 mod id;
 mod interim_event;
+mod msg;
 
 evident::create_static_publisher!(
     PUBLISHER,
     id_type = MinId,
-    msg_type = String,
+    msg_type = MinMsg,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent,
     capture_channel_bound = 1,
@@ -22,19 +23,19 @@ evident::create_static_publisher!(
 evident::create_set_event_macro!(
     no_export,
     id_type = MinId,
-    msg_type = String,
+    msg_type = MinMsg,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent
 );
 
 #[test]
-fn setup_minimal_publisher() {
+fn setup_minimal_msg() {
     let some_id = MinId { id: 3 };
-    let msg = "Some msg";
+    let msg = MinMsg { nr: 1 };
 
     let sub = PUBLISHER.subscribe(some_id).unwrap();
 
-    set_event!(some_id, msg).finalize();
+    set_event!(some_id, msg.clone()).finalize();
 
     let event = sub
         .get_receiver()
@@ -45,5 +46,11 @@ fn setup_minimal_publisher() {
         event.get_event_id(),
         &some_id,
         "Sent and received Ids differ."
+    );
+
+    assert_eq!(
+        event.get_msg().unwrap(),
+        &msg,
+        "Sent and received messages differ."
     );
 }

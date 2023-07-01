@@ -3,7 +3,7 @@ pub struct MinId {
     pub id: isize,
 }
 
-impl evident::publisher::Id for MinId {}
+impl evident::event::Id for MinId {}
 
 const START_CAPTURING: MinId = MinId { id: -1 };
 const STOP_CAPTURING: MinId = MinId { id: -2 };

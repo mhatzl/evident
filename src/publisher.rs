@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    hash::Hash,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         mpsc::{self, SyncSender, TrySendError},
@@ -10,15 +9,10 @@ use std::{
 };
 
 use crate::{
-    event::{entry::EventEntry, filter::Filter, intermediary::IntermediaryEvent, Event},
+    event::{entry::EventEntry, filter::Filter, intermediary::IntermediaryEvent, Event, Id, Msg},
     subscription::{Subscription, SubscriptionError, SubscriptionSender},
     this_origin,
 };
-
-pub trait Id:
-    core::fmt::Debug + Default + Clone + Hash + PartialEq + Eq + Send + Sync + 'static
-{
-}
 
 /// Trait to implement for [`Id`], to control the publisher and all listeners.
 pub trait CaptureControl {
@@ -62,18 +56,20 @@ pub enum EventTimestampKind {
     Created,
 }
 
-type Subscriber<K, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, T>>;
-type Capturer<K, T> = SyncSender<Event<K, T>>;
+type Subscriber<K, M, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, M, T>>;
+type IdSubscriber<K, M, T> = HashMap<K, Subscriber<K, M, T>>;
+type Capturer<K, M, T> = SyncSender<Event<K, M, T>>;
 
-pub struct EvidentPublisher<K, T, F>
+pub struct EvidentPublisher<K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
-    pub(crate) subscriptions: Arc<RwLock<HashMap<K, Subscriber<K, T>>>>,
-    pub(crate) any_event: Arc<RwLock<Subscriber<K, T>>>,
-    pub(crate) capturer: Capturer<K, T>,
+    pub(crate) subscriptions: Arc<RwLock<IdSubscriber<K, M, T>>>,
+    pub(crate) any_event: Arc<RwLock<Subscriber<K, M, T>>>,
+    pub(crate) capturer: Capturer<K, M, T>,
     filter: Option<F>,
     capturing: Arc<AtomicBool>,
     capture_blocking: Arc<AtomicBool>,
@@ -83,21 +79,23 @@ where
     timestamp_kind: EventTimestampKind,
 }
 
-impl<K, T, F> EvidentPublisher<K, T, F>
+impl<K, M, T, F> EvidentPublisher<K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
     fn create(
-        mut on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        mut on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: Option<F>,
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
         timestamp_kind: EventTimestampKind,
     ) -> Self {
-        let (send, recv): (SyncSender<Event<K, T>>, _) = mpsc::sync_channel(capture_channel_bound);
+        let (send, recv): (SyncSender<Event<K, M, T>>, _) =
+            mpsc::sync_channel(capture_channel_bound);
 
         let capturing = Arc::new(AtomicBool::new(true));
         let moved_capturing = capturing.clone();
@@ -163,7 +161,7 @@ where
     }
 
     pub fn new(
-        on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
         subscription_channel_bound: usize,
@@ -180,7 +178,7 @@ where
     }
 
     pub fn with(
-        on_event: impl FnMut(Event<K, T>) + std::marker::Send + 'static,
+        on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: F,
         capture_mode: CaptureMode,
         capture_channel_bound: usize,
@@ -201,7 +199,7 @@ where
         &self.filter
     }
 
-    pub fn entry_allowed(&self, entry: &impl EventEntry<K>) -> bool {
+    pub fn entry_allowed(&self, entry: &impl EventEntry<K, M>) -> bool {
         if !is_control_id(entry.get_event_id()) {
             if !self.capturing.load(Ordering::Acquire) {
                 return false;
@@ -217,7 +215,7 @@ where
         true
     }
 
-    pub fn _capture<I: IntermediaryEvent<K, T>>(&self, interm_event: &mut I) {
+    pub fn _capture<I: IntermediaryEvent<K, M, T>>(&self, interm_event: &mut I) {
         let entry = interm_event.take_entry();
 
         if !self.entry_allowed(&entry) {
@@ -271,14 +269,14 @@ where
         self.missed_captures.store(0, Ordering::Relaxed);
     }
 
-    pub fn subscribe(&self, id: K) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
+    pub fn subscribe(&self, id: K) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         self.subscribe_to_many(vec![id])
     }
 
     pub fn subscribe_to_many(
         &self,
         ids: Vec<K>,
-    ) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
+    ) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
         // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + self.subscription_channel_bound);
@@ -314,7 +312,9 @@ where
         })
     }
 
-    pub fn subscribe_to_all_events(&self) -> Result<Subscription<K, T, F>, SubscriptionError<K>> {
+    pub fn subscribe_to_all_events(
+        &self,
+    ) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         let (sender, receiver) = mpsc::sync_channel(self.capture_channel_bound);
         let channel_id = crate::uuid::Uuid::new_v4();
 
@@ -341,26 +341,20 @@ where
     }
 
     pub fn start_capturing(&self) {
-        let start_event = Event::new(EventEntry::new(
-            K::start_id(),
-            "Starting global capturing.",
-            this_origin!(),
-        ));
+        let empty_msg: Option<M> = None;
+        let start_event = Event::new(EventEntry::new(K::start_id(), empty_msg, this_origin!()));
 
         let _ = self.capturer.send(start_event);
     }
 
     pub fn stop_capturing(&self) {
-        let stop_event = Event::new(EventEntry::new(
-            K::stop_id(),
-            "Stopping global capturing.",
-            this_origin!(),
-        ));
+        let empty_msg: Option<M> = None;
+        let stop_event = Event::new(EventEntry::new(K::stop_id(), empty_msg, this_origin!()));
 
         let _ = self.capturer.send(stop_event);
     }
 
-    pub fn on_event(&self, event: Event<K, T>) {
+    pub fn on_event(&self, event: Event<K, M, T>) {
         let arc_event = Arc::new(event);
         let key = arc_event.entry.get_event_id();
 

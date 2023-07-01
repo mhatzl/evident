@@ -8,30 +8,32 @@ use std::{
 };
 
 use crate::{
-    event::{entry::EventEntry, filter::Filter, Event},
-    publisher::{CaptureControl, EvidentPublisher, Id},
+    event::{entry::EventEntry, filter::Filter, Event, Id, Msg},
+    publisher::{CaptureControl, EvidentPublisher},
 };
 
-pub struct Subscription<'p, K, T, F>
+pub struct Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
     pub(crate) channel_id: crate::uuid::Uuid,
-    pub(crate) receiver: Receiver<Arc<Event<K, T>>>,
+    pub(crate) receiver: Receiver<Arc<Event<K, M, T>>>,
     pub(crate) sub_to_all: bool,
     pub(crate) subscriptions: Option<HashSet<K>>,
-    pub(crate) publisher: &'p EvidentPublisher<K, T, F>,
+    pub(crate) publisher: &'p EvidentPublisher<K, M, T, F>,
 }
 
-impl<'p, K, T, F> Subscription<'p, K, T, F>
+impl<'p, K, M, T, F> Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
-    pub fn get_receiver(&self) -> &Receiver<Arc<Event<K, T>>> {
+    pub fn get_receiver(&self) -> &Receiver<Arc<Event<K, M, T>>> {
         &self.receiver
     }
 
@@ -139,11 +141,12 @@ where
     }
 }
 
-impl<'p, K, T, F> Drop for Subscription<'p, K, T, F>
+impl<'p, K, M, T, F> Drop for Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
     fn drop(&mut self) {
         // Note: We do not want to block the current thread for *unsubscribing*, since publisher also maintains dead channels.
@@ -163,30 +166,33 @@ where
     }
 }
 
-impl<'p, K, T, F> PartialEq for Subscription<'p, K, T, F>
+impl<'p, K, M, T, F> PartialEq for Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
     }
 }
 
-impl<'p, K, T, F> Eq for Subscription<'p, K, T, F>
+impl<'p, K, M, T, F> Eq for Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
 }
 
-impl<'p, K, T, F> Hash for Subscription<'p, K, T, F>
+impl<'p, K, M, T, F> Hash for Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
-    T: EventEntry<K>,
-    F: Filter<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
+    F: Filter<K, M>,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);
@@ -204,36 +210,40 @@ pub enum SubscriptionError<K: Id> {
 }
 
 #[derive(Clone)]
-pub(crate) struct SubscriptionSender<K, T>
+pub(crate) struct SubscriptionSender<K, M, T>
 where
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
     pub(crate) channel_id: crate::uuid::Uuid,
-    pub(crate) sender: SyncSender<Arc<Event<K, T>>>,
+    pub(crate) sender: SyncSender<Arc<Event<K, M, T>>>,
 }
 
-impl<K, T> PartialEq for SubscriptionSender<K, T>
+impl<K, M, T> PartialEq for SubscriptionSender<K, M, T>
 where
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.channel_id == other.channel_id
     }
 }
 
-impl<K, T> Eq for SubscriptionSender<K, T>
+impl<K, M, T> Eq for SubscriptionSender<K, M, T>
 where
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
 }
 
-impl<K, T> Hash for SubscriptionSender<K, T>
+impl<K, M, T> Hash for SubscriptionSender<K, M, T>
 where
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.channel_id.hash(state);

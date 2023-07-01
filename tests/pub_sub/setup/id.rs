@@ -3,7 +3,7 @@ pub struct MinId {
     pub id: isize,
 }
 
-impl evident::publisher::Id for MinId {}
+impl evident::event::Id for MinId {}
 
 impl std::fmt::Display for MinId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

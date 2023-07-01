@@ -1,6 +1,4 @@
-use std::{fmt::Display, marker::PhantomData};
-
-use crate::publisher::Id;
+use std::marker::PhantomData;
 
 use self::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 
@@ -10,43 +8,54 @@ pub mod finalized;
 pub mod intermediary;
 pub mod origin;
 
+pub trait Id:
+    core::fmt::Debug + Default + Clone + std::hash::Hash + PartialEq + Eq + Send + Sync + 'static
+{
+}
+
+pub trait Msg: core::fmt::Debug + Clone + Send + Sync + 'static {}
+
+impl Msg for String {}
+
 /// Set an event for an [`Id`] with an explicit message.
 ///
 /// # Arguments
 ///
 /// * `event_id` ... The [`Id`] used for this event
-/// * `msg` ... Main message that is set for this event (should be a user-centered event description)
+/// * `msg` ... Main message that is set for this event
 /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-pub fn set_event_with_msg<K: Id, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+pub fn set_event_with_msg<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEvent<K, M, E>>(
     event_id: K,
-    msg: &str,
+    msg: impl Into<M>,
     origin: Origin,
 ) -> I {
-    I::new(event_id, msg, origin)
+    I::new(event_id, Some(msg), origin)
 }
 
-/// Set an event for an [`Id`].
+/// Set an event for an [`Id`] without a message.
 ///
 /// # Arguments
 ///
-/// * `event_id` ... The [`Id`] used for this event (`to_string()` of the given [`Id`] is used for the event message)
+/// * `event_id` ... The [`Id`] used for this event
 /// * `origin` ... The origin where the event was set (Note: Use `this_origin!()`)
-pub fn set_event<K: Id + Display, E: EventEntry<K>, I: IntermediaryEvent<K, E>>(
+pub fn set_event<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEvent<K, M, E>>(
     event_id: K,
     origin: Origin,
 ) -> I {
-    let msg = event_id.to_string();
-    I::new(event_id, &msg, origin)
+    let empty_msg: Option<M> = None;
+    I::new(event_id, empty_msg, origin)
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct Event<K, T>
+pub struct Event<K, M, T>
 where
     K: Id,
-    T: EventEntry<K>,
+    M: Msg,
+    T: EventEntry<K, M>,
 {
     pub(crate) entry: T,
-    phantom: PhantomData<K>,
+    phantom_k: PhantomData<K>,
+    phantom_m: PhantomData<M>,
 
     thread_id: std::thread::ThreadId,
     thread_name: Option<String>,
@@ -54,13 +63,14 @@ where
     pub(crate) timestamp_dt_utc: Option<crate::chrono::DateTime<crate::chrono::offset::Utc>>,
 }
 
-impl<K: Id, T: EventEntry<K>> Event<K, T> {
+impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
     pub fn new(entry: T) -> Self {
         let curr_thread = std::thread::current();
 
         Event {
             entry,
-            phantom: PhantomData,
+            phantom_k: PhantomData,
+            phantom_m: PhantomData,
 
             thread_id: curr_thread.id(),
             thread_name: curr_thread.name().map(|s| s.to_string()),
@@ -84,7 +94,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     }
 
     /// Get the main message that was set when the event entry was created.
-    pub fn get_msg(&self) -> &str {
+    pub fn get_msg(&self) -> Option<&M> {
         self.entry.get_msg()
     }
 
@@ -106,7 +116,7 @@ impl<K: Id, T: EventEntry<K>> Event<K, T> {
     }
 }
 
-impl<K: Id, T: EventEntry<K>> core::fmt::Debug for Event<K, T> {
+impl<K: Id, M: Msg, T: EventEntry<K, M>> core::fmt::Debug for Event<K, M, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Event")
             .field("id", &self.entry.get_event_id())
