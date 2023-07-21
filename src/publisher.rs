@@ -97,47 +97,13 @@ where
         let (send, recv): (SyncSender<Event<K, M, T>>, _) =
             mpsc::sync_channel(capture_channel_bound);
 
-        let capturing = Arc::new(AtomicBool::new(true));
-        let moved_capturing = capturing.clone();
-
         thread::spawn(move || {
-            let mut channel_closed = false;
-            while !channel_closed {
-                // Note: Only options for inner loops to exit is either via capturing change, or due to closed channel.
-                channel_closed = true;
-
-                if moved_capturing.load(Ordering::Acquire) {
-                    while let Ok(mut event) = recv.recv() {
-                        let id = event.get_event_id().clone();
-                        if timestamp_kind == EventTimestampKind::Captured {
-                            event.timestamp = Some(std::time::SystemTime::now());
-                        }
-
-                        on_event(event);
-
-                        // Note: `on_event` must be called before to notify all listeners to stop aswell
-                        if CaptureControl::stop(&id) {
-                            moved_capturing.store(false, Ordering::Release);
-                            // Note: Set to 'false' to indicate that loop did not exit due to closed channel.
-                            channel_closed = false;
-                            break;
-                        }
-                    }
-                } else {
-                    while let Ok(event) = recv.recv() {
-                        let id = event.get_event_id();
-
-                        if CaptureControl::start(id) {
-                            // Note: `on_event` must be called to notify all listeners to start aswell
-                            on_event(event);
-
-                            moved_capturing.store(true, Ordering::Release);
-                            // Note: Set to 'false' to indicate that loop did not exit due to closed channel.
-                            channel_closed = false;
-                            break;
-                        }
-                    }
+            while let Ok(mut event) = recv.recv() {
+                if timestamp_kind == EventTimestampKind::Captured {
+                    event.timestamp = Some(std::time::SystemTime::now());
                 }
+
+                on_event(event);
             }
         });
 
@@ -151,7 +117,7 @@ where
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: send,
             filter,
-            capturing,
+            capturing: Arc::new(AtomicBool::new(true)),
             capture_blocking: mode,
             capture_channel_bound,
             subscription_channel_bound,
@@ -340,18 +306,22 @@ where
         self.capturing.load(Ordering::Acquire)
     }
 
-    pub fn start_capturing(&self) {
+    pub fn start(&self) {
         let empty_msg: Option<M> = None;
         let start_event = Event::new(EventEntry::new(K::start_id(), empty_msg, this_origin!()));
 
         let _ = self.capturer.send(start_event);
+
+        self.capturing.store(true, Ordering::Release);
     }
 
-    pub fn stop_capturing(&self) {
+    pub fn stop(&self) {
         let empty_msg: Option<M> = None;
         let stop_event = Event::new(EventEntry::new(K::stop_id(), empty_msg, this_origin!()));
 
         let _ = self.capturer.send(stop_event);
+
+        self.capturing.store(false, Ordering::Release);
     }
 
     pub fn on_event(&self, event: Event<K, M, T>) {
