@@ -15,9 +15,23 @@ use crate::{
 };
 
 /// Trait to implement for [`Id`], to control the publisher and all listeners.
+///
+/// [<req>cap.ctrl](https://github.com/mhatzl/evident/wiki/5.a-REQact-cap.ctrl#capctrl-control-capturing)
 pub trait CaptureControl {
+    /// Returns `true` if the given [`Id`] is used to signal the start of event capturing.
+    ///
+    /// **Possible implementation:**
+    ///
+    /// ```ignore
+    /// id == &START_CAPTURING_ID
+    /// ```
+    ///
+    /// [<req>cap.ctrl.start]
     fn start(id: &Self) -> bool;
 
+    /// Returns the *start-ID*.
+    ///
+    /// [<req>cap.ctrl.start]
     fn start_id() -> Self;
 
     /// Returns `true` if the given [`Id`] is used to signal the end of event capturing.
@@ -27,11 +41,19 @@ pub trait CaptureControl {
     /// ```ignore
     /// id == &STOP_CAPTURING_ID
     /// ```
+    ///
+    /// [<req>cap.ctrl.stop]
     fn stop(id: &Self) -> bool;
 
+    /// Returns the *stop-ID*.
+    ///
+    /// [<req>cap.ctrl.stop]
     fn stop_id() -> Self;
 }
 
+/// Returns `true` if the given [`Id`] is used to control capturing.
+///
+/// [<req>cap.ctrl]
 pub fn is_control_id(id: &impl CaptureControl) -> bool {
     CaptureControl::stop(id) || CaptureControl::start(id)
 }
@@ -56,10 +78,17 @@ pub enum EventTimestampKind {
     Created,
 }
 
+// Types below used for better clarity according to clippy.
+
 type Subscriber<K, M, T> = HashMap<crate::uuid::Uuid, SubscriptionSender<K, M, T>>;
 type IdSubscriber<K, M, T> = HashMap<K, Subscriber<K, M, T>>;
 type Capturer<K, M, T> = SyncSender<Event<K, M, T>>;
 
+/// An **EvidentPublisher** is used to capture, publish, and manage subscriptions.
+///
+/// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
+///
+/// [<req>pub]
 pub struct EvidentPublisher<K, M, T, F>
 where
     K: Id + CaptureControl,
@@ -67,15 +96,48 @@ where
     T: EventEntry<K, M>,
     F: Filter<K, M>,
 {
+    /// The hashmap of subscribers listening to specific events.
+    ///
+    /// [<req>subs.specific]
     pub(crate) subscriptions: Arc<RwLock<IdSubscriber<K, M, T>>>,
+
+    /// The hashmap of subscribers listening to all events.
+    ///
+    /// [<req>subs.all]
     pub(crate) any_event: Arc<RwLock<Subscriber<K, M, T>>>,
+
+    /// The send-part of the capturing channel.
+    ///
+    /// [<req>cap]
     pub(crate) capturer: Capturer<K, M, T>,
+
+    /// Optional filter that is applied when capturing events.
+    ///
+    /// [<req>cap.filter]
     filter: Option<F>,
+
+    /// Flag to control if capturing is active or inactive.
+    ///
+    /// [<req>cap.ctrl]
     capturing: Arc<AtomicBool>,
+
+    /// Flag to control the capture mode.
     capture_blocking: Arc<AtomicBool>,
+
+    /// Defines the size of the capturing send-buffer.
+    ///
+    /// [<req>cap]
     capture_channel_bound: usize,
+
+    /// Defines the size of each subscription send-buffer.
+    ///
+    /// [<req>subs]
     subscription_channel_bound: usize,
+
+    /// Number of missed captures in *non-blocking* capture mode.
     missed_captures: Arc<AtomicUsize>,
+
+    /// Defines at what point the event-timestamp is created.
     timestamp_kind: EventTimestampKind,
 }
 
@@ -86,6 +148,9 @@ where
     T: EventEntry<K, M>,
     F: Filter<K, M>,
 {
+    /// Create a new [`EvidentPublisher`], and spawn a new event handler thread for events captured by the publisher.
+    ///
+    /// [<req>pub]
     fn create(
         mut on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: Option<F>,
@@ -97,6 +162,7 @@ where
         let (send, recv): (SyncSender<Event<K, M, T>>, _) =
             mpsc::sync_channel(capture_channel_bound);
 
+        // [<req>pub.threaded]
         thread::spawn(move || {
             while let Ok(mut event) = recv.recv() {
                 if timestamp_kind == EventTimestampKind::Captured {
@@ -117,6 +183,7 @@ where
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: send,
             filter,
+            // [<req>cap.ctrl.init](https://github.com/mhatzl/evident/wiki/5.a-REQact-cap.ctrl#capctrlinit-initial-capturing-state)
             capturing: Arc::new(AtomicBool::new(true)),
             capture_blocking: mode,
             capture_channel_bound,
@@ -126,6 +193,9 @@ where
         }
     }
 
+    /// Create a new [`EvidentPublisher`] without an event filter.
+    ///
+    /// [<req>pub]
     pub fn new(
         on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         capture_mode: CaptureMode,
@@ -143,6 +213,9 @@ where
         )
     }
 
+    /// Create a new [`EvidentPublisher`] with an event filter.
+    ///
+    /// [<req>pub], [<req>cap.filter]
     pub fn with(
         on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: F,
@@ -161,10 +234,16 @@ where
         )
     }
 
+    /// Returns the event filter, or `None` if no filter is set.
+    ///
+    /// [<req>cap.filter]
     pub fn get_filter(&self) -> &Option<F> {
         &self.filter
     }
 
+    /// Returns `true` if the given event-entry passes the filter, or the event-ID is a control-ID.
+    ///
+    /// [<req>cap.filter]
     pub fn entry_allowed(&self, entry: &impl EventEntry<K, M>) -> bool {
         if !is_control_id(entry.get_event_id()) {
             if !self.capturing.load(Ordering::Acquire) {
@@ -181,9 +260,15 @@ where
         true
     }
 
+    /// Captures an intermediary event, and sends the resulting event to the event handler.
+    ///
+    /// **Note:** This function should **not** be called manually, because it is automatically called on `drop()` of an intermediary event.
+    ///
+    /// [<req>cap]
     pub fn _capture<I: IntermediaryEvent<K, M, T>>(&self, interm_event: &mut I) {
         let entry = interm_event.take_entry();
 
+        // [<req>cap.filter]
         if !self.entry_allowed(&entry) {
             return;
         }
@@ -212,6 +297,7 @@ where
         }
     }
 
+    /// Returns the current capture mode.
     pub fn get_capture_mode(&self) -> CaptureMode {
         if self.capture_blocking.load(Ordering::Acquire) {
             CaptureMode::Blocking
@@ -220,6 +306,7 @@ where
         }
     }
 
+    /// Allows to change the capture mode.
     pub fn set_capture_mode(&self, mode: CaptureMode) {
         match mode {
             CaptureMode::Blocking => self.capture_blocking.store(true, Ordering::Release),
@@ -227,24 +314,34 @@ where
         }
     }
 
+    /// Returns the number of missed captures in *non-blocking* mode since last reset.
     pub fn get_missed_captures(&self) -> usize {
         self.missed_captures.load(Ordering::Relaxed)
     }
 
+    /// Resets the number of missed captures in *non-blocking* mode.
     pub fn reset_missed_captures(&self) {
         self.missed_captures.store(0, Ordering::Relaxed);
     }
 
+    /// Returns a subscription to events with the given event-ID,
+    /// or a [`SubscriptionError<K>`] if the subscription could not be created.
+    ///
+    /// [<req>subs.specific.one]
     pub fn subscribe(&self, id: K) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         self.subscribe_to_many(vec![id])
     }
 
+    /// Returns a subscription to events with the given event-IDs,
+    /// or a [`SubscriptionError<K>`] if the subscription could not be created.
+    ///
+    /// [<req>subs.specific.mult]
     pub fn subscribe_to_many(
         &self,
         ids: Vec<K>,
     ) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         // Note: Number of ids to listen to most likely affects the number of received events => number is added to channel bound
-        // Addition instead of multiplikation, because even distribution accross events is highly unlikely.
+        // Addition instead of multiplication, because even distribution accross events is highly unlikely.
         let (sender, receiver) = mpsc::sync_channel(ids.len() + self.subscription_channel_bound);
         let channel_id = crate::uuid::Uuid::new_v4();
         let subscription_sender = SubscriptionSender { channel_id, sender };
@@ -278,6 +375,10 @@ where
         })
     }
 
+    /// Returns a subscription to all events,
+    /// or a [`SubscriptionError<K>`] if the subscription could not be created.
+    ///
+    /// [<req>subs.all]
     pub fn subscribe_to_all_events(
         &self,
     ) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
@@ -302,10 +403,18 @@ where
         })
     }
 
+    /// Returns `true` if capturing is *active*.
+    ///
+    /// [<req>cap.ctrl.info]
     pub fn is_capturing(&self) -> bool {
         self.capturing.load(Ordering::Acquire)
     }
 
+    /// Start capturing.
+    ///
+    /// **Note:** Capturing is already started initially, so this function is only needed after manually stopping capturing.
+    ///
+    /// [<req>cap.ctrl.start]
     pub fn start(&self) {
         let empty_msg: Option<M> = None;
         let start_event = Event::new(EventEntry::new(K::start_id(), empty_msg, this_origin!()));
@@ -315,6 +424,9 @@ where
         self.capturing.store(true, Ordering::Release);
     }
 
+    /// Stop capturing.
+    ///
+    /// [<req>cap.ctrl.stop]
     pub fn stop(&self) {
         let empty_msg: Option<M> = None;
         let stop_event = Event::new(EventEntry::new(K::stop_id(), empty_msg, this_origin!()));
@@ -324,6 +436,11 @@ where
         self.capturing.store(false, Ordering::Release);
     }
 
+    /// Send the given event to all subscriber of the event.
+    ///
+    /// **Note:** This function should **not** be called manually, because it is already called in the event handler.
+    ///
+    /// [<req>cap]
     pub fn on_event(&self, event: Event<K, M, T>) {
         let arc_event = Arc::new(event);
         let key = arc_event.entry.get_event_id();
