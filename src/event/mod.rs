@@ -13,8 +13,10 @@ pub mod intermediary;
 pub mod origin;
 
 /// Trait that must be implemented for a custom *evident* ID.\
-/// This implementation must then be used for implementations of the traits [`EventEntry`], [`IntermediaryEvent`], and [`Filter`](self::filter::Filter)
-/// that are used to create an *evident* publisher using the [`create_static_publisher!()`](crate::create_static_publisher) macro.
+/// This implementation must then be used for implementations of the traits [`EventEntry`] and [`IntermediaryEvent`].\
+/// All implementations are needed to create an *evident* publisher using the [`create_static_publisher!()`](crate::create_static_publisher) macro.
+///
+/// The optional [`Filter`](self::filter::Filter) trait must also use the same implementation of this [`Id`] trait.
 ///
 /// [<req>event.id], [<req>event.id.generic]
 pub trait Id:
@@ -23,8 +25,10 @@ pub trait Id:
 }
 
 /// Trait that must be implemented for a custom event message.\
-/// This implementation must then be used for implementations of the traits [`EventEntry`], [`IntermediaryEvent`], and [`Filter`](self::filter::Filter)
-/// that are used to create an *evident* publisher using the [`create_static_publisher!()`](crate::create_static_publisher) macro.
+/// This implementation must then be used for implementations of the traits [`EventEntry`] and [`IntermediaryEvent`].\
+/// All implementations are needed to create an *evident* publisher using the [`create_static_publisher!()`](crate::create_static_publisher) macro.
+///
+/// The optional [`Filter`](self::filter::Filter) trait must also use the same implementation of this [`Msg`] trait.
 ///
 /// **Note:** This trait is already implemented for [`String`].
 ///
@@ -135,7 +139,8 @@ impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
         self.entry.get_entry_id()
     }
 
-    /// Get the main message that was given when the event was set.
+    /// Get the main message that was given when the event was set,
+    /// or `None` if no message was given.
     ///
     /// [<req>event.msg]
     pub fn get_msg(&self) -> Option<&M> {
