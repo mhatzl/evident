@@ -1,3 +1,5 @@
+//! Contains specific *evident* tests.
+
 #[macro_use]
 pub(self) mod setup;
 
