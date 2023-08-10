@@ -1,3 +1,5 @@
+//! Contains macros used to create a static publisher, and the `set_event!()` macro.
+
 /// Macro to create a static publisher.
 ///
 /// ## Usage
@@ -55,6 +57,7 @@
 /// );
 /// ```
 ///
+/// [<req>qa.ux.macros]
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
@@ -112,6 +115,9 @@ macro_rules! create_static_publisher {
     };
 }
 
+/// Internal macro to set up a static publisher.
+///
+/// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
 #[macro_export]
 macro_rules! z__setup_static_publisher {
     ($publisher_name:ident,
@@ -180,6 +186,9 @@ macro_rules! z__setup_static_publisher {
     };
 }
 
+/// Internal macro to create a static publisher.
+///
+/// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
 #[macro_export]
 macro_rules! z__create_static_publisher {
     ($publisher_name:ident,
@@ -273,6 +282,8 @@ macro_rules! z__create_static_publisher {
 ///     interm_event_type = my_crate::my_mod::MyInterimEvent
 /// );
 /// ```
+///
+/// [<req>qa.ux.macros]
 #[macro_export]
 macro_rules! create_set_event_macro {
     (id_type = $id_t:ty,
@@ -280,6 +291,29 @@ macro_rules! create_set_event_macro {
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
+        /// Macro to set an event.
+        ///
+        /// **Variants:**
+        ///
+        /// - `set_event!(id)` ... Set an event for the given event-ID without a message
+        /// - `set_event!(id, msg)` ... Set an event for the given event-ID with the given message
+        ///
+        /// **Examples:**
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        ///
+        /// set_event!(id).finalize();
+        /// ```
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        /// let msg = "Your event message.";
+        ///
+        /// set_event!(id, msg).finalize();
+        /// ```
+        ///
+        /// [<req>event.set], [<req>qa.ux.macros]
         #[macro_export]
         macro_rules! set_event {
             ($id:expr) => {
@@ -303,6 +337,29 @@ macro_rules! create_set_event_macro {
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
+        /// Macro to set an event.
+        ///
+        /// **Variants:**
+        ///
+        /// - `set_event!(id)` ... Set an event for the given event-ID without a message
+        /// - `set_event!(id, msg)` ... Set an event for the given event-ID with the given message
+        ///
+        /// **Examples:**
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        ///
+        /// set_event!(id).finalize();
+        /// ```
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        /// let msg = "Your event message.";
+        ///
+        /// set_event!(id, msg).finalize();
+        /// ```
+        ///
+        /// [<req>event.set], [<req>qa.ux.macros]
         macro_rules! set_event {
             ($id:expr) => {
                 $crate::event::set_event::<$id_t, $msg_t, $entry_t, $interm_event_t>(
