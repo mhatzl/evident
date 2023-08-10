@@ -1,3 +1,7 @@
+//! This module contains minimal required implementations to create a pub/sub-setup with *evident*.
+//!
+//! [<req>qa.ux.usage]
+
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use self::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
@@ -6,6 +10,7 @@ mod entry;
 mod id;
 mod interim_event;
 
+// **Note:** No *visibility modifier* set makes the `PUBLISHER` variable private to this module.
 evident::create_static_publisher!(
     PUBLISHER,
     id_type = MinId,
@@ -18,7 +23,7 @@ evident::create_static_publisher!(
     timestamp_kind = EventTimestampKind::Created
 );
 
-// Note: **no_export** to prevent the macro from adding `#[macro_export]`.
+// **Note:** **no_export** to prevent the macro from adding `#[macro_export]`.
 evident::create_set_event_macro!(
     no_export,
     id_type = MinId,
@@ -27,6 +32,7 @@ evident::create_set_event_macro!(
     interm_event_type = MinInterimEvent
 );
 
+/// Test using the minimal pub/sub implementation to set and listen to an event.
 #[test]
 fn setup_minimal_publisher() {
     let some_id = MinId { id: 3 };
