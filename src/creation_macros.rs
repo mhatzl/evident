@@ -16,8 +16,8 @@
 ///     interm_event_type = <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
 ///     filter_type = <Optional Struct implementing `evident::event::filter::Filter`>,
 ///     filter = <Optional instance of the filter. Must be set if filter type is set>,
-///     capture_channel_bound = <`usize` literal for the channel bound used to capture events>,
-///     subscription_channel_bound = <`usize` literal for the channel bound used per subscription>,
+///     capture_channel_bound = <`usize` expression for the channel bound used to capture events>,
+///     subscription_channel_bound = <`usize` expression for the channel bound used per subscription>,
 ///     capture_mode = <`evident::publisher::CaptureMode` defining if event finalizing should be non-blocking (`NonBlocking`), or block the thread (`Blocking`)>,
 ///     timestamp_kind = <`evident::publisher::EventTimestampKind` defining if event timestamp should be set on creation (`Created`), or on capture (`Captured`)>
 /// );
