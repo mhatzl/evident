@@ -33,6 +33,8 @@ evident::create_set_event_macro!(
 );
 
 /// Test using the minimal pub/sub implementation to set and listen to an event.
+///
+/// [<req>cap.test.recv]
 #[test]
 fn setup_minimal_publisher() {
     let some_id = MinId { id: 3 };
