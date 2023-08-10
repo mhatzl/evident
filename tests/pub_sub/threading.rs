@@ -105,6 +105,7 @@ fn set_same_event_in_two_threads() {
     );
 }
 
+/// [<req>pub.threaded.test]
 #[test]
 fn set_events_in_many_threads() {
     // Note: This value should be 2x lower than the channel bounds set for the publisher.
