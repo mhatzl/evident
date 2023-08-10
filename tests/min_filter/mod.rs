@@ -1,3 +1,7 @@
+//! This module contains minimal required implementations to create a pub/sub-setup with *evident* and [`Filter`](evident::event::filter::Filter).
+//!
+//! [<req>qa.ux.usage]
+
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use crate::min_filter::id::STOP_CAPTURING;
@@ -15,7 +19,9 @@ evident::create_static_publisher!(
     msg_type = String,
     entry_type = MinEventEntry,
     interm_event_type = MinInterimEvent,
+    // Adds the minimal filter to the publisher
     filter_type = MinFilter,
+    // Adds the minimal filter to the publisher
     filter = MinFilter::default(),
     capture_channel_bound = 1,
     subscription_channel_bound = 1,
