@@ -12,6 +12,9 @@ use crate::{
     publisher::{CaptureControl, EvidentPublisher},
 };
 
+/// Subscription that is returned when subscribing to events captured by an [`EvidentPublisher`].
+///
+///[<req>subs]
 pub struct Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
@@ -19,10 +22,21 @@ where
     T: EventEntry<K, M>,
     F: Filter<K, M>,
 {
+    /// The ID of the channel used to send events from the publisher to the subscription.
     pub(crate) channel_id: crate::uuid::Uuid,
+
+    /// The channel [`Receiver`] used to receive captured events from the publisher.
     pub(crate) receiver: Receiver<Arc<Event<K, M, T>>>,
+
+    /// Flag set to `true` if this subscription is subscribed to receive all captured events.
     pub(crate) sub_to_all: bool,
+
+    /// Optional set of event-IDs this subscription is subscribed to.
+    ///
+    /// **Note:** Only relevant for subscriptions to specific event-IDs.
     pub(crate) subscriptions: Option<HashSet<K>>,
+
+    /// A reference to the publisher the subscription was created from.
     pub(crate) publisher: &'p EvidentPublisher<K, M, T, F>,
 }
 
@@ -33,18 +47,30 @@ where
     T: EventEntry<K, M>,
     F: Filter<K, M>,
 {
+    /// Get the [`Receiver`] of the subscription channel.
     pub fn get_receiver(&self) -> &Receiver<Arc<Event<K, M, T>>> {
         &self.receiver
     }
 
+    /// Unsubscribes this subscription.
     pub fn unsubscribe(self) {
         drop(self)
     }
 
+    /// Unsubscribes from the given event-ID.
+    /// Returns [`SubscriptionError::IdNotSubscribed`] if the ID was not subscribed,
+    /// or [`SubscriptionError::UnsubscribeWouldDeleteSubscription`] if the subscription would not be subscribed to any ID afterwards.
+    ///
+    /// **Note:** Only possible for subscriptions to specific IDs.
     pub fn unsubscribe_id(&mut self, id: K) -> Result<(), SubscriptionError<K>> {
         self.unsubscribe_many(vec![id])
     }
 
+    /// Unsubscribes from the given list of event-IDs.
+    /// Returns [`SubscriptionError::IdNotSubscribed`] if any of the IDs was not subscribed,
+    /// or [`SubscriptionError::UnsubscribeWouldDeleteSubscription`] if the subscription would not be subscribed to any ID afterwards.
+    ///
+    /// **Note:** Only possible for subscriptions to specific IDs.
     pub fn unsubscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionError<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
             return Err(SubscriptionError::AllEventsSubscriptionNotModifiable);
@@ -56,9 +82,9 @@ where
             return Err(SubscriptionError::UnsubscribeWouldDeleteSubscription);
         }
 
-        for id in ids.clone() {
-            if !subs.contains(&id) {
-                return Err(SubscriptionError::IdNotSubscribed(id));
+        for id in &ids {
+            if !subs.contains(id) {
+                return Err(SubscriptionError::IdNotSubscribed(id.clone()));
             }
         }
 
@@ -88,9 +114,9 @@ where
 
         let subs = self.subscriptions.as_mut().unwrap();
 
-        for id in ids.clone() {
-            if subs.contains(&id) {
-                return Err(SubscriptionError::IdAlreadySubscribed(id));
+        for id in &ids {
+            if subs.contains(id) {
+                return Err(SubscriptionError::IdAlreadySubscribed(id.clone()));
             }
         }
         let any_sub_id = match subs.iter().next() {
