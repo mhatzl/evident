@@ -1,7 +1,7 @@
 //! This module creates a public [`EvidentPublisher`](evident::publisher::EvidentPublisher),
 //! and the `set_event!()` macros for this publisher.
 //!
-//! [<req>qa.ux.usage]
+//! [req:qa.ux.usage]
 
 use evident::publisher::{CaptureMode, EventTimestampKind};
 

@@ -1,6 +1,6 @@
 //! This module contains the minimal required implementation for the [`Id`](evident::event::Id) trait.
 //!
-//! [<req>qa.ux.usage]
+//! [req:qa.ux.usage]
 
 #[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Copy)]
 pub struct MinId {

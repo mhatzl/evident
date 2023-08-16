@@ -1,6 +1,6 @@
 //! This module contains the minimal required implementation for the [`Id`](evident::event::Id) trait.
 //!
-//! [<req>qa.ux.usage]
+//! [req:qa.ux.usage]
 
 /// Struct used for a minimal [`Id`](evident::event::Id) trait implementation.
 #[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Copy)]
@@ -12,12 +12,12 @@ impl evident::event::Id for MinId {}
 
 /// Event-ID to notify the publisher and all listeners that capturing should be started.
 ///
-/// [<req>event.id.ctrl], [<req>cap.ctrl.start]
+/// [req:event.id.ctrl], [req:cap.ctrl.start]
 const START_CAPTURING: MinId = MinId { id: -1 };
 
 /// Event-ID to notify the publisher and all listeners that capturing should be stopped.
 ///
-/// [<req>event.id.ctrl], [<req>cap.ctrl.stop]
+/// [req:event.id.ctrl], [req:cap.ctrl.stop]
 const STOP_CAPTURING: MinId = MinId { id: -2 };
 
 impl evident::publisher::CaptureControl for MinId {

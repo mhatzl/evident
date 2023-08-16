@@ -1,6 +1,6 @@
 //! This module contains minimal required implementations to create a pub/sub-setup with *evident* and a custom [`Msg`](evident::event::Msg).
 //!
-//! [<req>qa.ux.usage]
+//! [req:qa.ux.usage]
 
 use evident::publisher::{CaptureMode, EventTimestampKind};
 

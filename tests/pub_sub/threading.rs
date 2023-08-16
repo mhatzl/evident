@@ -164,7 +164,7 @@ fn set_events_in_many_threads() {
     }
 }
 
-/// [<req>pub.threaded.test]
+/// [req:pub.threaded.test]
 #[test]
 fn set_events_in_many_threads_for_one_subscriber() {
     // Note: This value should be at least 2x lower than the channel bounds set for the publisher.

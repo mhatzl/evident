@@ -57,7 +57,7 @@
 /// );
 /// ```
 ///
-/// [<req>qa.ux.macros]
+/// [req:qa.ux.macros]
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
@@ -283,7 +283,7 @@ macro_rules! z__create_static_publisher {
 /// );
 /// ```
 ///
-/// [<req>qa.ux.macros]
+/// [req:qa.ux.macros]
 #[macro_export]
 macro_rules! create_set_event_macro {
     (id_type = $id_t:ty,
@@ -313,7 +313,7 @@ macro_rules! create_set_event_macro {
         /// set_event!(id, msg).finalize();
         /// ```
         ///
-        /// [<req>event.set], [<req>qa.ux.macros]
+        /// [req:event.set], [req:qa.ux.macros]
         #[macro_export]
         macro_rules! set_event {
             ($id:expr) => {
@@ -359,7 +359,7 @@ macro_rules! create_set_event_macro {
         /// set_event!(id, msg).finalize();
         /// ```
         ///
-        /// [<req>event.set], [<req>qa.ux.macros]
+        /// [req:event.set], [req:qa.ux.macros]
         macro_rules! set_event {
             ($id:expr) => {
                 $crate::event::set_event::<$id_t, $msg_t, $entry_t, $interm_event_t>(

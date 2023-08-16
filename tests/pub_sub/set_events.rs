@@ -8,7 +8,7 @@ use crate::pub_sub::setup::{
     entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent, TESTS_PUBLISHER,
 };
 
-/// [<req>event.origin.test.basic]
+/// [req:event.origin.test.basic]
 #[test]
 fn set_event_has_correct_origin() {
     let id = MinId { id: 1 };
@@ -52,7 +52,7 @@ fn set_event_has_correct_origin() {
     );
 }
 
-/// [<req>event.origin.test.two_origins]
+/// [req:event.origin.test.two_origins]
 #[test]
 fn set_same_event_twice_with_different_origin() {
     let id = MinId { id: 1 };
@@ -104,7 +104,7 @@ fn set_same_event_twice_with_different_origin() {
     );
 }
 
-/// [<req>event.origin.test.same_origin]
+/// [req:event.origin.test.same_origin]
 #[test]
 fn set_same_event_twice_with_same_origin() {
     let id = MinId { id: 1 };
@@ -152,7 +152,7 @@ fn set_same_event_twice_with_same_origin() {
     assert_ne!(event_1, event_2, "Received events are equal.");
 }
 
-/// [<req>subs.test.mult_subs]
+/// [req:subs.test.mult_subs]
 #[test]
 fn set_event_received_exactly_once_per_receiver() {
     let id = MinId { id: 1 };
