@@ -7,7 +7,7 @@
 /// In the following example, text between `<>` is used as placeholder.\
 /// The visibility setting at the beginning is also **optional**.
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     <visibility specifier> <Name for the publisher>,
 ///     id_type = <Struct implementing `evident::event::Id`>,
@@ -25,7 +25,7 @@
 ///
 /// **Example without filter:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
@@ -41,7 +41,7 @@
 ///
 /// **Example with filter:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
@@ -254,7 +254,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// Note: Set fully qualified paths for the types to make the macro accessible from anywhere.
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     id_type = <Struct implementing `evident::publisher::Id`>,
 ///     entry_type = <Struct implementing `evident::event::EventEntry`>,
@@ -264,7 +264,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// **Example with dummy implementations:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     id_type = my_crate::my_mod::MyId,
 ///     entry_type = my_crate::my_mod::MyEventEntry,
@@ -274,7 +274,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// **Example with no export:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     no_export,
 ///     id_type = my_crate::my_mod::MyId,
