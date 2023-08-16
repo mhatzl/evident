@@ -118,6 +118,7 @@ macro_rules! create_static_publisher {
 /// Internal macro to set up a static publisher.
 ///
 /// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! z__setup_static_publisher {
     ($publisher_name:ident,
@@ -189,6 +190,7 @@ macro_rules! z__setup_static_publisher {
 /// Internal macro to create a static publisher.
 ///
 /// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! z__create_static_publisher {
     ($publisher_name:ident,
