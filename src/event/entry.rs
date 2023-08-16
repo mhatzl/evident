@@ -7,10 +7,10 @@ use std::hash::Hash;
 use super::{origin::Origin, Id, Msg};
 
 /// Trait that must be implemented for a custom *evident* event-entry.\
-/// This implementation must then be used for implementations of the traits [`EventEntry`] and [`IntermediaryEvent`].\
+/// This implementation must then be used for implementations of the traits [`EventEntry`] and [`IntermediaryEvent`](super::intermediary::IntermediaryEvent).\
 /// All implementations are needed to create an *evident* publisher using the [`create_static_publisher!()`](crate::create_static_publisher) macro.
 ///
-/// The optional [`Filter`](self::filter::Filter) trait must also use the same implementation of this [`Id`] trait.
+/// The optional [`Filter`](super::filter::Filter) trait must also use the same implementation of this [`Id`] trait.
 ///
 /// **Note:** Since it is a trait, the custom implementation may contain additional fields and functions.
 ///
