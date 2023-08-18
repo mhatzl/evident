@@ -86,8 +86,6 @@ type Capturer<K, M, T> = SyncSender<Event<K, M, T>>;
 
 /// An **EvidentPublisher** is used to capture, publish, and manage subscriptions.
 ///
-/// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
-///
 /// [req:pub]
 pub struct EvidentPublisher<K, M, T, F>
 where
@@ -150,6 +148,8 @@ where
 {
     /// Create a new [`EvidentPublisher`], and spawn a new event handler thread for events captured by the publisher.
     ///
+    /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
+    ///
     /// [req:pub]
     fn create(
         mut on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
@@ -195,6 +195,8 @@ where
 
     /// Create a new [`EvidentPublisher`] without an event filter.
     ///
+    /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
+    ///
     /// [req:pub]
     pub fn new(
         on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
@@ -214,6 +216,8 @@ where
     }
 
     /// Create a new [`EvidentPublisher`] with an event filter.
+    ///
+    /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
     ///
     /// [req:pub], [req:cap.filter]
     pub fn with(
@@ -265,6 +269,7 @@ where
     /// **Note:** This function should **not** be called manually, because it is automatically called on `drop()` of an intermediary event.
     ///
     /// [req:cap]
+    #[doc(hidden)]
     pub fn _capture<I: IntermediaryEvent<K, M, T>>(&self, interm_event: &mut I) {
         let entry = interm_event.take_entry();
 
@@ -441,6 +446,7 @@ where
     /// **Note:** This function should **not** be called manually, because it is already called in the event handler.
     ///
     /// [req:cap]
+    #[doc(hidden)]
     pub fn on_event(&self, event: Event<K, M, T>) {
         let arc_event = Arc::new(event);
         let key = arc_event.entry.get_event_id();
