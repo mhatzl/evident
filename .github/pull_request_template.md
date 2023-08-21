@@ -10,7 +10,7 @@ e.g. closes #1 closes #2 …
 
 **Please consider the following requirements:**
 
-- [ ] Add/Update requirement references (see: [req:qa.links])
+- [ ] Add/Update requirement references (see: [req:qa.tracing])
 - [ ] Add usage examples in doc-comments (see: [req:qa.ux.usage])
 - [ ] Only use macros if they improve *evident's* usability (see: [req:qa.ux.macros])
 - [ ] Prefer `RwLock` over `Mutex` (see: [req:qa.perf.locks]) 
