@@ -16,7 +16,7 @@ use crate::{
 
 /// Trait to implement for [`Id`], to control the publisher and all listeners.
 ///
-/// [req:cap.ctrl](https://github.com/mhatzl/evident/wiki/5.a-REQact-cap.ctrl#capctrl-control-capturing)
+/// [req:cap.ctrl](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl)
 pub trait CaptureControl {
     /// Returns `true` if the given [`Id`] is used to signal the start of event capturing.
     ///
@@ -183,7 +183,7 @@ where
             any_event: Arc::new(RwLock::new(HashMap::new())),
             capturer: send,
             filter,
-            // [req:cap.ctrl.init](https://github.com/mhatzl/evident/wiki/5.a-REQact-cap.ctrl#capctrlinit-initial-capturing-state)
+            // [req:cap.ctrl.init](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.init)
             capturing: Arc::new(AtomicBool::new(true)),
             capture_blocking: mode,
             capture_channel_bound,
