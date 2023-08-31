@@ -1,6 +1,6 @@
 //! This module contains minimal required implementations to create a pub/sub-setup with *evident*.
 //!
-//! [req:qa.ux.usage]
+//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples)
 
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
@@ -34,7 +34,7 @@ evident::create_set_event_macro!(
 
 /// Test using the minimal pub/sub implementation to set and listen to an event.
 ///
-/// [req:cap.test.recv]
+/// [req:cap.test.recv](https://github.com/mhatzl/evident/wiki/5-REQ-cap#captestrecv-captured-event-received-by-a-subscriber)
 #[test]
 fn setup_minimal_publisher() {
     let some_id = MinId { id: 3 };

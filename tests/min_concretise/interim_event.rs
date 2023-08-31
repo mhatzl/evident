@@ -1,6 +1,6 @@
 //! This module contains the minimal required implementation for the [`IntermediaryEvent`] trait.
 //!
-//! [req:qa.ux.usage]
+//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples)
 
 use evident::event::{entry::EventEntry, intermediary::IntermediaryEvent, origin::Origin};
 

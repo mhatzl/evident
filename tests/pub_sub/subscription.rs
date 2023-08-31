@@ -131,7 +131,7 @@ fn subscribe_to_two_ids_at_once() {
     );
 }
 
-/// [req:cap.test.mult]
+/// [req:cap.test.mult](https://github.com/mhatzl/evident/wiki/5-REQ-cap#captestmult-multiple-captured-events-received-by-a-subscriber)
 #[test]
 fn receiver_for_all_events_two_events_set() {
     let id_1 = MinId { id: 1 };

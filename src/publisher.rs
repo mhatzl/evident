@@ -26,12 +26,12 @@ pub trait CaptureControl {
     /// id == &START_CAPTURING_ID
     /// ```
     ///
-    /// [req:cap.ctrl.start]
+    /// [req:cap.ctrl.start](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.start#capctrlstart-start-capturing)
     fn start(id: &Self) -> bool;
 
     /// Returns the *start-ID*.
     ///
-    /// [req:cap.ctrl.start]
+    /// [req:cap.ctrl.start](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.start#capctrlstart-start-capturing)
     fn start_id() -> Self;
 
     /// Returns `true` if the given [`Id`] is used to signal the end of event capturing.
@@ -42,18 +42,18 @@ pub trait CaptureControl {
     /// id == &STOP_CAPTURING_ID
     /// ```
     ///
-    /// [req:cap.ctrl.stop]
+    /// [req:cap.ctrl.stop](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.stop#capctrlstop-stop-capturing)
     fn stop(id: &Self) -> bool;
 
     /// Returns the *stop-ID*.
     ///
-    /// [req:cap.ctrl.stop]
+    /// [req:cap.ctrl.stop](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.stop#capctrlstop-stop-capturing)
     fn stop_id() -> Self;
 }
 
 /// Returns `true` if the given [`Id`] is used to control capturing.
 ///
-/// [req:cap.ctrl]
+/// [req:cap.ctrl](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl#capctrl-control-capturing)
 pub fn is_control_id(id: &impl CaptureControl) -> bool {
     CaptureControl::stop(id) || CaptureControl::start(id)
 }
@@ -86,7 +86,7 @@ type Capturer<K, M, T> = SyncSender<Event<K, M, T>>;
 
 /// An **EvidentPublisher** is used to capture, publish, and manage subscriptions.
 ///
-/// [req:pub]
+/// [req:pub](https://github.com/mhatzl/evident/wiki/5-REQ-pub#pub-event-publishing)
 pub struct EvidentPublisher<K, M, T, F>
 where
     K: Id + CaptureControl,
@@ -96,27 +96,27 @@ where
 {
     /// The hashmap of subscribers listening to specific events.
     ///
-    /// [req:subs.specific]
+    /// [req:subs.specific](https://github.com/mhatzl/evident/wiki/5-REQ-subs.specific#subsspecific-subscribe-to-specific-events)
     pub(crate) subscriptions: Arc<RwLock<IdSubscriber<K, M, T>>>,
 
     /// The hashmap of subscribers listening to all events.
     ///
-    /// [req:subs.all]
+    /// [req:subs.all](https://github.com/mhatzl/evident/wiki/5-REQ-subs.all#subsall-subscribe-to-all-events)
     pub(crate) any_event: Arc<RwLock<Subscriber<K, M, T>>>,
 
     /// The send-part of the capturing channel.
     ///
-    /// [req:cap]
+    /// [req:cap](https://github.com/mhatzl/evident/wiki/5-REQ-cap#cap-capturing-events)
     pub(crate) capturer: Capturer<K, M, T>,
 
     /// Optional filter that is applied when capturing events.
     ///
-    /// [req:cap.filter]
+    /// [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
     filter: Option<F>,
 
     /// Flag to control if capturing is active or inactive.
     ///
-    /// [req:cap.ctrl]
+    /// [req:cap.ctrl](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl#capctrl-control-capturing)
     capturing: Arc<AtomicBool>,
 
     /// Flag to control the capture mode.
@@ -124,12 +124,12 @@ where
 
     /// Defines the size of the capturing send-buffer.
     ///
-    /// [req:cap]
+    /// [req:cap](https://github.com/mhatzl/evident/wiki/5-REQ-cap#cap-capturing-events)
     capture_channel_bound: usize,
 
     /// Defines the size of each subscription send-buffer.
     ///
-    /// [req:subs]
+    /// [req:subs](https://github.com/mhatzl/evident/wiki/5-REQ-subs#subs-subscribing-to-events)
     subscription_channel_bound: usize,
 
     /// Number of missed captures in *non-blocking* capture mode.
@@ -150,7 +150,7 @@ where
     ///
     /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
     ///
-    /// [req:pub]
+    /// [req:pub](https://github.com/mhatzl/evident/wiki/5-REQ-pub#pub-event-publishing)
     fn create(
         mut on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: Option<F>,
@@ -162,7 +162,7 @@ where
         let (send, recv): (SyncSender<Event<K, M, T>>, _) =
             mpsc::sync_channel(capture_channel_bound);
 
-        // [req:pub.threaded]
+        // [req:pub.threaded](https://github.com/mhatzl/evident/wiki/5-REQ-pub.threaded#pubthreaded-multithreaded-publishing)
         thread::spawn(move || {
             while let Ok(mut event) = recv.recv() {
                 if timestamp_kind == EventTimestampKind::Captured {
@@ -197,7 +197,7 @@ where
     ///
     /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
     ///
-    /// [req:pub]
+    /// [req:pub](https://github.com/mhatzl/evident/wiki/5-REQ-pub#pub-event-publishing)
     pub fn new(
         on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         capture_mode: CaptureMode,
@@ -219,7 +219,7 @@ where
     ///
     /// **Note:** You should use the macro [`create_static_publisher`](crate::create_static_publisher) instead.
     ///
-    /// [req:pub], [req:cap.filter]
+    /// [req:pub](https://github.com/mhatzl/evident/wiki/5-REQ-pub#pub-event-publishing), [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
     pub fn with(
         on_event: impl FnMut(Event<K, M, T>) + std::marker::Send + 'static,
         filter: F,
@@ -240,14 +240,14 @@ where
 
     /// Returns the event filter, or `None` if no filter is set.
     ///
-    /// [req:cap.filter]
+    /// [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
     pub fn get_filter(&self) -> &Option<F> {
         &self.filter
     }
 
     /// Returns `true` if the given event-entry passes the filter, or the event-ID is a control-ID.
     ///
-    /// [req:cap.filter]
+    /// [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
     pub fn entry_allowed(&self, entry: &impl EventEntry<K, M>) -> bool {
         if !is_control_id(entry.get_event_id()) {
             if !self.capturing.load(Ordering::Acquire) {
@@ -268,12 +268,12 @@ where
     ///
     /// **Note:** This function should **not** be called manually, because it is automatically called on `drop()` of an intermediary event.
     ///
-    /// [req:cap]
+    /// [req:cap](https://github.com/mhatzl/evident/wiki/5-REQ-cap#cap-capturing-events)
     #[doc(hidden)]
     pub fn _capture<I: IntermediaryEvent<K, M, T>>(&self, interm_event: &mut I) {
         let entry = interm_event.take_entry();
 
-        // [req:cap.filter]
+        // [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
         if !self.entry_allowed(&entry) {
             return;
         }
@@ -332,7 +332,7 @@ where
     /// Returns a subscription to events with the given event-ID,
     /// or a [`SubscriptionError<K>`] if the subscription could not be created.
     ///
-    /// [req:subs.specific.one]
+    /// [req:subs.specific.one](https://github.com/mhatzl/evident/wiki/5-REQ-subs.specific.one#subsspecificone-subscribe-to-one-specific-event)
     pub fn subscribe(&self, id: K) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
         self.subscribe_to_many(vec![id])
     }
@@ -340,7 +340,7 @@ where
     /// Returns a subscription to events with the given event-IDs,
     /// or a [`SubscriptionError<K>`] if the subscription could not be created.
     ///
-    /// [req:subs.specific.mult]
+    /// [req:subs.specific.mult](https://github.com/mhatzl/evident/wiki/5-REQ-subs.specific.mult#subsspecificmult-subscribe-to-multiple-specific-events)
     pub fn subscribe_to_many(
         &self,
         ids: Vec<K>,
@@ -383,7 +383,7 @@ where
     /// Returns a subscription to all events,
     /// or a [`SubscriptionError<K>`] if the subscription could not be created.
     ///
-    /// [req:subs.all]
+    /// [req:subs.all](https://github.com/mhatzl/evident/wiki/5-REQ-subs.all#subsall-subscribe-to-all-events)
     pub fn subscribe_to_all_events(
         &self,
     ) -> Result<Subscription<K, M, T, F>, SubscriptionError<K>> {
@@ -410,7 +410,7 @@ where
 
     /// Returns `true` if capturing is *active*.
     ///
-    /// [req:cap.ctrl.info]
+    /// [req:cap.ctrl.info](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.info#capctrlinfo-get-capturing-state)
     pub fn is_capturing(&self) -> bool {
         self.capturing.load(Ordering::Acquire)
     }
@@ -419,7 +419,7 @@ where
     ///
     /// **Note:** Capturing is already started initially, so this function is only needed after manually stopping capturing.
     ///
-    /// [req:cap.ctrl.start]
+    /// [req:cap.ctrl.start](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.start#capctrlstart-start-capturing)
     pub fn start(&self) {
         let empty_msg: Option<M> = None;
         let start_event = Event::new(EventEntry::new(K::start_id(), empty_msg, this_origin!()));
@@ -431,7 +431,7 @@ where
 
     /// Stop capturing.
     ///
-    /// [req:cap.ctrl.stop]
+    /// [req:cap.ctrl.stop](https://github.com/mhatzl/evident/wiki/5-REQ-cap.ctrl.stop#capctrlstop-stop-capturing)
     pub fn stop(&self) {
         let empty_msg: Option<M> = None;
         let stop_event = Event::new(EventEntry::new(K::stop_id(), empty_msg, this_origin!()));
@@ -445,7 +445,7 @@ where
     ///
     /// **Note:** This function should **not** be called manually, because it is already called in the event handler.
     ///
-    /// [req:cap]
+    /// [req:cap](https://github.com/mhatzl/evident/wiki/5-REQ-cap#cap-capturing-events)
     #[doc(hidden)]
     pub fn on_event(&self, event: Event<K, M, T>) {
         let arc_event = Arc::new(event);

@@ -1,6 +1,6 @@
 //! This module contains minimal required implementations to create a pub/sub-setup with *evident* and [`Filter`](evident::event::filter::Filter).
 //!
-//! [req:qa.ux.usage]
+//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples)
 
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
