@@ -14,7 +14,7 @@ use crate::{
 
 /// Subscription that is returned when subscribing to events captured by an [`EvidentPublisher`].
 ///
-///[req:subs](https://github.com/mhatzl/evident/wiki/5-REQ-subs#subs-subscribing-to-events)
+///[req:subs]
 pub struct Subscription<'p, K, M, T, F>
 where
     K: Id + CaptureControl,
@@ -134,7 +134,7 @@ where
     /// * [`SubscriptionError::NoSubscriptionChannelAvailable`] ... If the [`EvidentPublisher`] has no stored channel to this [`Subscription`]
     /// * [`SubscriptionError::AllEventsSubscriptionNotModifiable`] ... If the [`Subscription`] was created to receive all events
     ///
-    /// [req:subs.specific.one](https://github.com/mhatzl/evident/wiki/5-REQ-subs.specific.one#subsspecificone-subscribe-to-one-specific-event)
+    /// [req:subs.specific.one]
     pub fn subscribe_id(&mut self, id: K) -> Result<(), SubscriptionError<K>> {
         self.subscribe_many(vec![id])
     }
@@ -154,7 +154,7 @@ where
     /// * [`SubscriptionError::NoSubscriptionChannelAvailable`] ... If the [`EvidentPublisher`] has no stored channel to this [`Subscription`]
     /// * [`SubscriptionError::AllEventsSubscriptionNotModifiable`] ... If the [`Subscription`] was created to receive all events
     ///
-    /// [req:subs.specific.mult](https://github.com/mhatzl/evident/wiki/5-REQ-subs.specific.mult#subsspecificmult-subscribe-to-multiple-specific-events)
+    /// [req:subs.specific.mult]
     pub fn subscribe_many(&mut self, ids: Vec<K>) -> Result<(), SubscriptionError<K>> {
         if self.sub_to_all || self.subscriptions.is_none() {
             return Err(SubscriptionError::AllEventsSubscriptionNotModifiable);
@@ -305,7 +305,7 @@ pub enum SubscriptionError<K: Id> {
 
 /// *Sender-part* of the subscription-channel between a [`Subscription`] and an [`EvidentPublisher`].
 ///
-/// [req:subs](https://github.com/mhatzl/evident/wiki/5-REQ-subs#subs-subscribing-to-events)
+/// [req:subs]
 #[derive(Clone)]
 pub(crate) struct SubscriptionSender<K, M, T>
 where

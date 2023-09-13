@@ -1,6 +1,6 @@
 //! This module contains the minimal required implementation for the [`Filter`] trait.
 //!
-//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples), [req:cap.filter](https://github.com/mhatzl/evident/wiki/5-REQ-cap.filter#capfilter-filter-captured-events)
+//! [req:qa.ux.usage], [req:cap.filter]
 
 use evident::event::filter::Filter;
 

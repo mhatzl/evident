@@ -3,7 +3,7 @@
 /// Structure to point to a location in the program code.
 /// It is used to know where the event was set, but may be used for other use cases aswell.
 ///
-/// [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+/// [req:event.origin]
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
     /// Module path to the code location.
@@ -31,7 +31,7 @@ impl Origin {
     /// * `filename` ... Filename where the code is located
     /// * `line_nr` ... Line number where the code is located
     ///
-    /// [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+    /// [req:event.origin]
     pub fn new(module_path: &'static str, filename: &'static str, line_nr: u32) -> Self {
         Origin {
             module_path,
@@ -59,7 +59,7 @@ impl core::fmt::Display for Origin {
 
 /// Convenience wrapper to create an [`Origin`] for the code position this macro is used at.
 ///
-/// [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin), [req:qa.ux.macros](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.macros#qauxmacros-use-macros-if-it-improves-usability)
+/// [req:event.origin], [req:qa.ux.macros]
 #[macro_export]
 macro_rules! this_origin {
     () => {

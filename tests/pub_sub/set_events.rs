@@ -8,7 +8,7 @@ use crate::pub_sub::setup::{
     entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent, TESTS_PUBLISHER,
 };
 
-/// [req:event.origin.test.basic](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigintestbasic-origin-of-set-event-points-to-set_event-call)
+/// [req:event.origin.test.basic]
 #[test]
 fn set_event_has_correct_origin() {
     let id = MinId { id: 1 };
@@ -52,7 +52,7 @@ fn set_event_has_correct_origin() {
     );
 }
 
-/// [req:event.origin.test.two_origins](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigintesttwo_origins-origin-of-an-event-set-with-two-set_event-calls-differs)
+/// [req:event.origin.test.two_origins]
 #[test]
 fn set_same_event_twice_with_different_origin() {
     let id = MinId { id: 1 };
@@ -104,7 +104,7 @@ fn set_same_event_twice_with_different_origin() {
     );
 }
 
-/// [req:event.origin.test.same_origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigintestsame_origin-set-origin-of-an-event-manually-for-two-set_event_with_msg-calls)
+/// [req:event.origin.test.same_origin]
 #[test]
 fn set_same_event_twice_with_same_origin() {
     let id = MinId { id: 1 };
@@ -152,7 +152,7 @@ fn set_same_event_twice_with_same_origin() {
     assert_ne!(event_1, event_2, "Received events are equal.");
 }
 
-/// [req:subs.test.mult_subs](https://github.com/mhatzl/evident/wiki/5-REQ-subs#substestmult_subs-multiple-subscribers-to-same-event)
+/// [req:subs.test.mult_subs]
 #[test]
 fn set_event_received_exactly_once_per_receiver() {
     let id = MinId { id: 1 };

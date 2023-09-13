@@ -1,6 +1,6 @@
 //! Contains the [`EventEntry] trait.
 //!
-//! [req:event.entry](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry#evententry-event-entry)
+//! [req:event.entry]
 
 use std::hash::Hash;
 
@@ -14,7 +14,7 @@ use super::{origin::Origin, Id, Msg};
 ///
 /// **Note:** Since it is a trait, the custom implementation may contain additional fields and functions.
 ///
-/// [req:event.entry](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry#evententry-event-entry), [req:event.entry.generic](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry.generic#evententrygeneric-generic-event-entry)
+/// [req:event.entry], [req:event.entry.generic]
 pub trait EventEntry<K: Id, M: Msg>: Default + Clone + Hash + Send + Sync + 'static {
     /// Creates a new [`EventEntry`].
     ///
@@ -26,32 +26,32 @@ pub trait EventEntry<K: Id, M: Msg>: Default + Clone + Hash + Send + Sync + 'sta
     /// * `msg` ... Optional main event message
     /// * `origin` ... The [`Origin`] the event was set at
     ///
-    /// [req:event.entry](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry#evententry-event-entry), [req:event.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.id#eventid-event-identifier), [req:event.msg](https://github.com/mhatzl/evident/wiki/5-REQ-event.msg#eventmsg-event-message), [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+    /// [req:event.entry], [req:event.id], [req:event.msg], [req:event.origin]
     fn new(event_id: K, msg: Option<impl Into<M>>, origin: Origin) -> Self;
 
     /// Returns the [`Id`] of this event.
     ///
-    /// [req:event.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.id#eventid-event-identifier)
+    /// [req:event.id]
     fn get_event_id(&self) -> &K;
 
     /// Convert this [`EventEntry`] into the [`Id`] of this event.
     ///
-    /// [req:event.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.id#eventid-event-identifier)
+    /// [req:event.id]
     fn into_event_id(self) -> K;
 
     /// Get the entry-ID that was generated when the event was set.
     ///
-    /// [req:event.entry.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry.id#evententryid-unique-event-entry)
+    /// [req:event.entry.id]
     fn get_entry_id(&self) -> crate::uuid::Uuid;
 
     /// Get the main message that was given when the event was set,
     /// or `None` if no message was given.
     ///
-    /// [req:event.msg](https://github.com/mhatzl/evident/wiki/5-REQ-event.msg#eventmsg-event-message)
+    /// [req:event.msg]
     fn get_msg(&self) -> Option<&M>;
 
     /// Get the [`Origin`] the event was set at.
     ///
-    /// [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+    /// [req:event.origin]
     fn get_origin(&self) -> &Origin;
 }

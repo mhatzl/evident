@@ -1,6 +1,6 @@
 //! This module contains minimal required implementations to create a pub/sub-setup with *evident* and public publisher.
 //!
-//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples)
+//! [req:qa.ux.usage]
 
 use crate::public_concretise::public_publisher::PUB_PUBLISHER;
 

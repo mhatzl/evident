@@ -1,6 +1,6 @@
 //! Contains the *evident* [`Event`], and all related traits, structures, and functions.
 //!
-//! [req:event](https://github.com/mhatzl/evident/wiki/5-REQ-event#event-structure-of-an-evident-event)
+//! [req:event]
 
 use std::marker::PhantomData;
 
@@ -18,7 +18,7 @@ pub mod origin;
 ///
 /// The optional [`Filter`](self::filter::Filter) trait must also use the same implementation of this [`Id`] trait.
 ///
-/// [req:event.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.id#eventid-event-identifier), [req:event.id.generic](https://github.com/mhatzl/evident/wiki/5-REQ-event.id.generic#eventidgeneric-generic-event-id)
+/// [req:event.id], [req:event.id.generic]
 pub trait Id:
     core::fmt::Debug + Default + Clone + std::hash::Hash + PartialEq + Eq + Send + Sync + 'static
 {
@@ -32,7 +32,7 @@ pub trait Id:
 ///
 /// **Note:** This trait is already implemented for [`String`].
 ///
-/// [req:event.msg](https://github.com/mhatzl/evident/wiki/5-REQ-event.msg#eventmsg-event-message)
+/// [req:event.msg]
 pub trait Msg: core::fmt::Debug + Clone + Send + Sync + 'static {}
 
 impl Msg for String {}
@@ -46,7 +46,7 @@ impl Msg for String {}
 /// * `msg` ... Main message that is set for this event
 /// * `origin` ... The [`Origin`] the event was set at (Note: Use macro [`this_origin`](crate::this_origin))
 ///
-/// [req:event.set](https://github.com/mhatzl/evident/wiki/5-REQ-event.set#eventset-set-an-event), [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+/// [req:event.set], [req:event.origin]
 pub fn set_event_with_msg<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEvent<K, M, E>>(
     event_id: K,
     msg: impl Into<M>,
@@ -63,7 +63,7 @@ pub fn set_event_with_msg<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEve
 /// * `event_id` ... The [`Id`] used for this event
 /// * `origin` ... The [`Origin`] the event was set at (Note: Use macro [`this_origin`](crate::this_origin))
 ///
-/// [req:event.set](https://github.com/mhatzl/evident/wiki/5-REQ-event.set#eventset-set-an-event), [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+/// [req:event.set], [req:event.origin]
 pub fn set_event<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEvent<K, M, E>>(
     event_id: K,
     origin: Origin,
@@ -74,7 +74,7 @@ pub fn set_event<K: Id, M: Msg, E: EventEntry<K, M>, I: IntermediaryEvent<K, M, 
 
 /// *evident* event that is sent to subscribers if they are subscribed to the [`Id`] of this event.
 ///
-/// [req:event](https://github.com/mhatzl/evident/wiki/5-REQ-event#event-structure-of-an-evident-event)
+/// [req:event]
 #[derive(Clone, PartialEq, Eq)]
 pub struct Event<K, M, T>
 where
@@ -84,7 +84,7 @@ where
 {
     /// [`EventEntry`] of the event.
     ///
-    /// [req:event.entry](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry#evententry-event-entry)
+    /// [req:event.entry]
     pub(crate) entry: T,
 
     // PahmtomData needed for unused generics
@@ -120,21 +120,21 @@ impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
 
     /// Returns the [`Id`] of this event.
     ///
-    /// [req:event.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.id#eventid-event-identifier)
+    /// [req:event.id]
     pub fn get_event_id(&self) -> &K {
         self.entry.get_event_id()
     }
 
     /// Returns the [`EventEntry`] of this event.
     ///
-    /// [req:event.entry](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry#evententry-event-entry)
+    /// [req:event.entry]
     pub fn get_entry(&self) -> &T {
         &self.entry
     }
 
     /// Get the entry-ID that was generated when the event was set.
     ///
-    /// [req:event.entry.id](https://github.com/mhatzl/evident/wiki/5-REQ-event.entry.id#evententryid-unique-event-entry)
+    /// [req:event.entry.id]
     pub fn get_entry_id(&self) -> crate::uuid::Uuid {
         self.entry.get_entry_id()
     }
@@ -142,14 +142,14 @@ impl<K: Id, M: Msg, T: EventEntry<K, M>> Event<K, M, T> {
     /// Get the main message that was given when the event was set,
     /// or `None` if no message was given.
     ///
-    /// [req:event.msg](https://github.com/mhatzl/evident/wiki/5-REQ-event.msg#eventmsg-event-message)
+    /// [req:event.msg]
     pub fn get_msg(&self) -> Option<&M> {
         self.entry.get_msg()
     }
 
     /// Get the [`Origin`] the event was set at.
     ///
-    /// [req:event.origin](https://github.com/mhatzl/evident/wiki/5-REQ-event.origin#eventorigin-get-the-event-origin)
+    /// [req:event.origin]
     pub fn get_origin(&self) -> &Origin {
         self.entry.get_origin()
     }

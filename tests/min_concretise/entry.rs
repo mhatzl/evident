@@ -1,6 +1,6 @@
 //! This module contains the minimal required implementation for the [`EventEntry`] trait.
 //!
-//! [req:qa.ux.usage](https://github.com/mhatzl/evident/wiki/5-REQ-qa.ux.usage#qauxusage-provide-usage-examples)
+//! [req:qa.ux.usage]
 
 use evident::event::{entry::EventEntry, origin::Origin};
 
