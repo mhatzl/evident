@@ -1,4 +1,4 @@
-# List of issues that this PR closes
+## List of issues that this PR closes
 
 [[
 
@@ -6,7 +6,7 @@ e.g. closes #1 closes #2 …
 
 ]]
 
-# Definition of Done ([req:qa.DoD](https://github.com/mhatzl/evident/wiki/5-REQ-qa.DoD#qadod-have-a-definition-of-done-for-requirements))
+## Definition of Done ([req:qa.DoD](https://github.com/mhatzl/evident/wiki/5-REQ-qa.DoD#qadod-have-a-definition-of-done-for-requirements))
 
 **Please consider the following requirements:**
 
@@ -17,7 +17,7 @@ e.g. closes #1 closes #2 …
 
 **Note:** You may ignore requirements that are not relevant to your PR.
 
-# Decisions you made for this PR
+## Decisions you made for this PR
 
 {{
 
