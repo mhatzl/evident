@@ -163,3 +163,52 @@ fn set_events_in_many_threads() {
         );
     }
 }
+
+/// [req:pub.threaded.test]
+#[test]
+fn set_events_in_many_threads_for_one_subscriber() {
+    // Note: This value should be at least 2x lower than the channel bounds set for the publisher.
+    // 2x lower is to make sure that the channel buffer is not the reason for this test to fail.
+    const THREAD_CNT: isize = 10;
+    let base_id = MinId { id: 1 };
+    let msg = "Set event message";
+
+    let mut subs = TESTS_PUBLISHER.subscribe(base_id).unwrap();
+    // start at 2 to jump over base_id
+    for i in 2..=THREAD_CNT {
+        let loop_id = MinId { id: i };
+        subs.subscribe_id(loop_id).unwrap();
+    }
+
+    set_event!(base_id, msg).finalize();
+
+    rayon::scope(|s| {
+        // start at 2 to jump over base_id
+        for i in 2..=THREAD_CNT {
+            s.spawn(move |_| {
+                let loop_id = MinId { id: i };
+
+                // Note: `finalize()` would not be needed, since events are finalized on drop, but it makes this test easier to read
+                set_event!(loop_id, msg).finalize();
+            });
+        }
+    });
+
+    // Note: IDs might be received in any order => capture all received events, and then check if all set events are received.
+
+    let mut recv_ids = Vec::new();
+    for _ in 1..=THREAD_CNT {
+        let event = subs
+            .get_receiver()
+            .recv_timeout(std::time::Duration::from_millis(10))
+            .unwrap();
+
+        recv_ids.push(*event.get_event_id());
+    }
+
+    for i in 1..=THREAD_CNT {
+        let id = MinId { id: i };
+
+        assert!(recv_ids.contains(&id), "Received event {} has wrong Id.", i);
+    }
+}

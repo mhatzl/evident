@@ -131,6 +131,7 @@ fn subscribe_to_two_ids_at_once() {
     );
 }
 
+/// [req:cap.test.mult]
 #[test]
 fn receiver_for_all_events_two_events_set() {
     let id_1 = MinId { id: 1 };

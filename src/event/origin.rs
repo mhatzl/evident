@@ -1,17 +1,22 @@
-/// Structure representing the origin of an event.
+//! Contains the [`Origin`] structure used to know where the event was set.
+
+/// Structure to point to a location in the program code.
+/// It is used to know where the event was set, but may be used for other use cases aswell.
+///
+/// [req:event.origin]
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Origin {
-    /// Module path where the event was set.
+    /// Module path to the code location.
     ///
     /// Note: Use `module_path!()`.
     pub module_path: &'static str,
 
-    /// Filename where the event was set.
+    /// Filename where the code is located.
     ///
     /// Note: Use `file!()`.
     pub filename: &'static str,
 
-    /// Line number where the event was set.
+    /// Line number where the code is located.
     ///
     /// Note: Use `line!()`.
     pub line_nr: u32,
@@ -19,6 +24,14 @@ pub struct Origin {
 
 impl Origin {
     /// Create a new [`Origin`].
+    ///
+    /// # Arguments
+    ///
+    /// * `module_path` ... Module path to the code location
+    /// * `filename` ... Filename where the code is located
+    /// * `line_nr` ... Line number where the code is located
+    ///
+    /// [req:event.origin]
     pub fn new(module_path: &'static str, filename: &'static str, line_nr: u32) -> Self {
         Origin {
             module_path,
@@ -29,7 +42,7 @@ impl Origin {
 }
 
 impl From<&Origin> for String {
-    /// Outputs given [`Origin`] as `crate="<crate name>", module="<module path>", file="<filename>", line=<line number>`.
+    /// Formats given [`Origin`] as `module="<module path>", file="<filename>", line=<line number>`.
     fn from(origin: &Origin) -> Self {
         format!(
             "module=\"{}\", file=\"{}\", line={}",
@@ -44,6 +57,9 @@ impl core::fmt::Display for Origin {
     }
 }
 
+/// Convenience wrapper to create an [`Origin`] for the code position this macro is used at.
+///
+/// [req:event.origin], [req:qa.ux.macros]
 #[macro_export]
 macro_rules! this_origin {
     () => {

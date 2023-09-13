@@ -1,3 +1,5 @@
+//! Contains macros used to create a static publisher, and the `set_event!()` macro.
+
 /// Macro to create a static publisher.
 ///
 /// ## Usage
@@ -5,7 +7,7 @@
 /// In the following example, text between `<>` is used as placeholder.\
 /// The visibility setting at the beginning is also **optional**.
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     <visibility specifier> <Name for the publisher>,
 ///     id_type = <Struct implementing `evident::event::Id`>,
@@ -14,8 +16,8 @@
 ///     interm_event_type = <Struct implementing `evident::event::intermediary::IntermediaryEvent`>,
 ///     filter_type = <Optional Struct implementing `evident::event::filter::Filter`>,
 ///     filter = <Optional instance of the filter. Must be set if filter type is set>,
-///     capture_channel_bound = <`usize` literal for the channel bound used to capture events>,
-///     subscription_channel_bound = <`usize` literal for the channel bound used per subscription>,
+///     capture_channel_bound = <`usize` expression for the channel bound used to capture events>,
+///     subscription_channel_bound = <`usize` expression for the channel bound used per subscription>,
 ///     capture_mode = <`evident::publisher::CaptureMode` defining if event finalizing should be non-blocking (`NonBlocking`), or block the thread (`Blocking`)>,
 ///     timestamp_kind = <`evident::publisher::EventTimestampKind` defining if event timestamp should be set on creation (`Created`), or on capture (`Captured`)>
 /// );
@@ -23,7 +25,7 @@
 ///
 /// **Example without filter:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
@@ -39,7 +41,7 @@
 ///
 /// **Example with filter:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_static_publisher!(
 ///     pub MY_PUBLISHER,
 ///     id_type = MyId,
@@ -55,6 +57,7 @@
 /// );
 /// ```
 ///
+/// [req:qa.ux.macros]
 #[macro_export]
 macro_rules! create_static_publisher {
     ($publisher_name:ident,
@@ -112,6 +115,10 @@ macro_rules! create_static_publisher {
     };
 }
 
+/// Internal macro to set up a static publisher.
+///
+/// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! z__setup_static_publisher {
     ($publisher_name:ident,
@@ -180,6 +187,10 @@ macro_rules! z__setup_static_publisher {
     };
 }
 
+/// Internal macro to create a static publisher.
+///
+/// **Note:** Use [`create_static_publisher`](crate::create_static_publisher) instead.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! z__create_static_publisher {
     ($publisher_name:ident,
@@ -245,7 +256,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// Note: Set fully qualified paths for the types to make the macro accessible from anywhere.
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     id_type = <Struct implementing `evident::publisher::Id`>,
 ///     entry_type = <Struct implementing `evident::event::EventEntry`>,
@@ -255,7 +266,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// **Example with dummy implementations:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     id_type = my_crate::my_mod::MyId,
 ///     entry_type = my_crate::my_mod::MyEventEntry,
@@ -265,7 +276,7 @@ macro_rules! z__create_static_publisher {
 ///
 /// **Example with no export:**
 ///
-/// ```ignore
+/// ```text
 /// evident::create_set_event_macro!(
 ///     no_export,
 ///     id_type = my_crate::my_mod::MyId,
@@ -273,6 +284,8 @@ macro_rules! z__create_static_publisher {
 ///     interm_event_type = my_crate::my_mod::MyInterimEvent
 /// );
 /// ```
+///
+/// [req:qa.ux.macros]
 #[macro_export]
 macro_rules! create_set_event_macro {
     (id_type = $id_t:ty,
@@ -280,6 +293,29 @@ macro_rules! create_set_event_macro {
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
+        /// Macro to set an event.
+        ///
+        /// **Variants:**
+        ///
+        /// - `set_event!(id)` ... Set an event for the given event-ID without a message
+        /// - `set_event!(id, msg)` ... Set an event for the given event-ID with the given message
+        ///
+        /// **Examples:**
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        ///
+        /// set_event!(id).finalize();
+        /// ```
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        /// let msg = "Your event message.";
+        ///
+        /// set_event!(id, msg).finalize();
+        /// ```
+        ///
+        /// [req:event.set], [req:qa.ux.macros]
         #[macro_export]
         macro_rules! set_event {
             ($id:expr) => {
@@ -303,6 +339,29 @@ macro_rules! create_set_event_macro {
         entry_type = $entry_t:ty,
         interm_event_type = $interm_event_t:ty
     ) => {
+        /// Macro to set an event.
+        ///
+        /// **Variants:**
+        ///
+        /// - `set_event!(id)` ... Set an event for the given event-ID without a message
+        /// - `set_event!(id, msg)` ... Set an event for the given event-ID with the given message
+        ///
+        /// **Examples:**
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        ///
+        /// set_event!(id).finalize();
+        /// ```
+        ///
+        /// ```ignore
+        /// let id = YourIdType { ... };
+        /// let msg = "Your event message.";
+        ///
+        /// set_event!(id, msg).finalize();
+        /// ```
+        ///
+        /// [req:event.set], [req:qa.ux.macros]
         macro_rules! set_event {
             ($id:expr) => {
                 $crate::event::set_event::<$id_t, $msg_t, $entry_t, $interm_event_t>(

@@ -1,7 +1,12 @@
+//! This module contains the minimal required implementation for the [`Filter`] trait.
+//!
+//! [req:qa.ux.usage], [req:cap.filter]
+
 use evident::event::filter::Filter;
 
 use super::id::MinId;
 
+/// Struct used for a minimal [`Filter`] trait implementation.
 #[derive(Default)]
 pub struct MinFilter {}
 

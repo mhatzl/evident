@@ -1,3 +1,7 @@
+//! This module contains minimal required implementations to create a pub/sub-setup with *evident* and public publisher.
+//!
+//! [req:qa.ux.usage]
+
 use crate::public_concretise::public_publisher::PUB_PUBLISHER;
 
 use self::id::MinId;

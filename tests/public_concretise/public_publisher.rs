@@ -1,3 +1,8 @@
+//! This module creates a public [`EvidentPublisher`](evident::publisher::EvidentPublisher),
+//! and the `set_event!()` macros for this publisher.
+//!
+//! [req:qa.ux.usage]
+
 use evident::publisher::{CaptureMode, EventTimestampKind};
 
 use crate::public_concretise::{entry::MinEventEntry, id::MinId, interim_event::MinInterimEvent};
