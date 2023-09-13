@@ -203,7 +203,7 @@ fn set_events_in_many_threads_for_one_subscriber() {
             .recv_timeout(std::time::Duration::from_millis(10))
             .unwrap();
 
-        recv_ids.push(event.get_event_id().clone());
+        recv_ids.push(*event.get_event_id());
     }
 
     for i in 1..=THREAD_CNT {
