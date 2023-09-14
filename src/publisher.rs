@@ -1,3 +1,9 @@
+//! Contains the [`EvidentPublisher`] struct that is used to create public static publishers.
+//!
+//! Use the [`create_static_publisher`](crate::create_static_publisher) macro for a convenience wrapper to create a publisher.
+//!
+//! [req:pub]
+
 use std::{
     collections::{HashMap, HashSet},
     sync::{
@@ -58,9 +64,14 @@ pub fn is_control_id(id: &impl CaptureControl) -> bool {
     CaptureControl::stop(id) || CaptureControl::start(id)
 }
 
+/// Defines the capture mode for a publisher.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CaptureMode {
+    /// Event capturing may be blocking if the capture buffer is full.
     Blocking,
+    /// Event capturing does not block, resulting in events **not** being captured if the capture buffer is full.
+    ///
+    /// You may inspect the number of missed events with the `get_missed_captures()` of the [`EvidentPublisher`].
     NonBlocking,
 }
 

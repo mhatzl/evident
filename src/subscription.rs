@@ -1,3 +1,7 @@
+//! Contains the [`Subscription`] struct that is returned by `subscribe` functions from an [`EvidentPublisher`].
+//!
+//! [req:subs]
+
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,

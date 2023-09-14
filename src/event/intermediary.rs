@@ -1,5 +1,9 @@
+//! Contains the [`IntermediaryEvent`] trait.
+
 use super::{entry::EventEntry, finalized::FinalizedEvent, origin::Origin, Id, Msg};
 
+/// The [`IntermediaryEvent`] trait is used to add information after setting an event,
+/// and to be able to automatically capture events once they go out of scope.
 pub trait IntermediaryEvent<K, M, T>
 where
     Self: std::marker::Sized,
@@ -7,10 +11,19 @@ where
     M: Msg,
     T: EventEntry<K, M>,
 {
+    /// Create a new [`IntermediaryEvent`].
+    ///
+    /// # Arguments
+    ///
+    /// * `event_id` ... The [`Id`] of the event
+    /// * `msg` ... An optional [`Msg`] set for this event
+    /// * `origin` ... The [`Origin`] this event was set
     fn new(event_id: K, msg: Option<impl Into<M>>, origin: Origin) -> Self;
 
+    /// Returns the [`EventEntry`] that was created by this [`IntermediaryEvent`].
     fn get_entry(&self) -> &T;
 
+    /// Takes the [`EventEntry`] that was created by this [`IntermediaryEvent`].
     fn take_entry(&mut self) -> T;
 
     /// Returns the [`Id`] of this event
@@ -34,6 +47,7 @@ where
         captured_event
     }
 
+    /// Converts this [`IntermediaryEvent`] into the related event [`Id`].
     fn into_event_id(self) -> K {
         self.finalize().into_event_id()
     }
